@@ -1,6 +1,6 @@
 import React, { useMemo, useState ,useEffect} from 'react'
 import { Routes, Route, Link, useNavigate } from 'react-router-dom'
-import { Plus, Search, Filter, ArrowUpDown, ArrowRight, ArrowLeft, LogOutIcon } from "lucide-react"
+import { Plus, Search, Filter, ArrowUpDown, ArrowRight, Info,ArrowLeft, LogOutIcon,HeartPulse, Pill , ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from 'framer-motion'
 
 // NOTE: This single-file component is meant to be dropped into a Tailwind + React project.
@@ -243,70 +243,548 @@ function Dashboard() {
   )
 }
 
+function DemoCard({ title, body }) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <div>
+        <h4 className="text-lg font-semibold">{title}</h4>
+        <p className="text-sm text-gray-500 mt-2">{body}</p>
+      </div>
+    </div>
+  )
+}
 
+function RegionCountrySelector() {
+  const [showRegions, setShowRegions] = useState(false);
+  const [showCountries, setShowCountries] = useState(false);
+  const [regionSearch, setRegionSearch] = useState("");
+  const [countrySearch, setCountrySearch] = useState("");
+  const [selectedRegions, setSelectedRegions] = useState([]);
+  const [selectedCountries, setSelectedCountries] = useState([]);
 
+  const regions = [
+    "Asia Pacific (APAC)",
+    "Europe (EU)",
+    "Latin America (LATAM)",
+    "Middle East & Africa (MEA)",
+    "North America (NA)",
+  ];
 
-// EditorCanvas.jsx
-// Drop this component in place of your dotted-area <div>.
-// Requirements: framer-motion, TailwindCSS.
-// Install: npm i framer-motion
+  const countries = [
+    { code: "MC", name: "Monaco" },
+    { code: "FR", name: "France" },
+    { code: "US", name: "United States" },
+    { code: "IN", name: "India" },
+    { code: "JP", name: "Japan" },
+  ];
+
+  const toggleSelection = (item, selected, setSelected) => {
+    if (selected.includes(item)) {
+      setSelected(selected.filter((i) => i !== item));
+    } else {
+      setSelected([...selected, item]);
+    }
+  };
+
+  return (
+    <div className="bg-[#FAFAFA] p-6 rounded-[12px] shadow-sm border border-gray-100 w-full max-w-5xl mx-auto relative">
+      <h2 className="text-lg font-medium mb-6">
+        Select Region/Country where products are distributed or intended to be distributed
+      </h2>
+
+      <div className="flex flex-col md:flex-row gap-4 items-center relative">
+        {/* Region Search */}
+        <div className="relative flex-1">
+          <div
+            onClick={() => {
+              setShowRegions(!showRegions);
+              setShowCountries(false);
+            }}
+            className="flex items-center border border-gray-200 rounded-md px-4 py-2 bg-white cursor-pointer"
+          >
+            <Search size={18} className="text-gray-400 mr-2" />
+            <input
+              type="text"
+              value={regionSearch}
+              onChange={(e) => setRegionSearch(e.target.value)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowRegions(true);
+              }}
+              placeholder="Search Region"
+              className="flex-1 outline-none text-gray-700 placeholder-gray-400"
+            />
+          </div>
+
+          {showRegions && (
+            <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-h-72 overflow-auto">
+              {regions
+                .filter((r) =>
+                  r.toLowerCase().includes(regionSearch.toLowerCase())
+                )
+                .map((region) => (
+                  <label
+                    key={region}
+                    className="flex items-center gap-2 py-1 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedRegions.includes(region)}
+                      onChange={() =>
+                        toggleSelection(region, selectedRegions, setSelectedRegions)
+                      }
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded"
+                    />
+                    <span className="text-gray-800 text-sm">{region}</span>
+                  </label>
+                ))}
+            </div>
+          )}
+        </div>
+
+        {/* Country Search */}
+        <div className="relative flex-1">
+          <div
+            onClick={() => {
+              setShowCountries(!showCountries);
+              setShowRegions(false);
+            }}
+            className="flex items-center border border-gray-200 rounded-md px-4 py-2 bg-white cursor-pointer"
+          >
+            <Search size={18} className="text-gray-400 mr-2" />
+            <input
+              type="text"
+              value={countrySearch}
+              onChange={(e) => setCountrySearch(e.target.value)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowCountries(true);
+              }}
+              placeholder="Search Country"
+              className="flex-1 outline-none text-gray-700 placeholder-gray-400"
+            />
+          </div>
+
+          {showCountries && (
+            <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-h-72 overflow-auto">
+              {countries
+                .filter((c) =>
+                  c.name.toLowerCase().includes(countrySearch.toLowerCase())
+                )
+                .map((c) => (
+                  <label
+                    key={c.code}
+                    className="flex flex-col gap-1 py-2 px-2 rounded-md hover:bg-gray-50 cursor-pointer"
+                    onClick={() => toggleSelection(c.name, selectedCountries, setSelectedCountries)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={selectedCountries.includes(c.name)}
+                        onChange={() =>
+                          toggleSelection(c.name, selectedCountries, setSelectedCountries)
+                        }
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded"
+                      />
+                      <span className="text-gray-800 text-sm">
+                        {c.code} : {c.name}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-500 ml-6">
+                      Authority (HA) Database(s)
+                    </span>
+                  </label>
+                ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProductCategorySelector() {
+  const [showBusinessUnits, setShowBusinessUnits] = useState(false);
+  const [showCategoryLevels, setShowCategoryLevels] = useState(false);
+  const [selectedBusinessUnit, setSelectedBusinessUnit] = useState("");
+  const [selectedCategoryLevel, setSelectedCategoryLevel] = useState("");
+
+  const businessUnits = [
+    "Aesthetics & Reconstruction",
+    "Circulatory Restoration",
+    "Electrophysiology",
+    "Heart Recovery",
+    "Neurovascular",
+    "Orthopedics",
+    "Surgery",
+    "Surgical Vision",
+    "Vision Care",
+    "Other: Not Listed",
+  ];
+
+  const categoryLevels = [
+    "Implantable",
+    "Non-implantable – single use",
+    "Non-implantable – multi use",
+  ];
+
+  const handleSelect = (item, type) => {
+    if (type === "business") {
+      setSelectedBusinessUnit(item);
+      setShowBusinessUnits(false);
+    } else {
+      setSelectedCategoryLevel(item);
+      setShowCategoryLevels(false);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log({
+      businessUnit: selectedBusinessUnit,
+      categoryLevel: selectedCategoryLevel,
+    });
+  };
+
+  return (
+    <div className="bg-[#FAFAFA] p-6 rounded-[12px] shadow-sm border border-gray-100 w-full max-w-4xl mx-auto relative">
+      <h2 className="text-lg font-medium mb-6">Select product category</h2>
+
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col md:flex-row gap-4 items-center relative"
+      >
+        {/* Select Business Unit */}
+        <div className="relative flex-1">
+          <div
+            onClick={() => {
+              setShowBusinessUnits(!showBusinessUnits);
+              setShowCategoryLevels(false);
+            }}
+            className="flex justify-between items-center border border-gray-200 rounded-md px-4 py-2 bg-white cursor-pointer"
+          >
+            <span className="text-gray-700">
+              {selectedBusinessUnit || "Select Business Unit"}
+            </span>
+            <ChevronDown size={18} className="text-gray-400" />
+          </div>
+
+          {showBusinessUnits && (
+            <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg p-3 max-h-80 overflow-auto">
+              {businessUnits.map((item) => (
+                <label
+                  key={item}
+                  onClick={() => handleSelect(item, "business")}
+                  className={`flex items-center gap-2 py-2 px-2 rounded-md cursor-pointer hover:bg-gray-50 ${
+                    selectedBusinessUnit === item ? "bg-gray-100" : ""
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="business"
+                    checked={selectedBusinessUnit === item}
+                    onChange={() => handleSelect(item, "business")}
+                    className="w-4 h-4 text-blue-600 border-gray-300"
+                  />
+                  <span className="text-gray-800 text-sm">{item}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Select Product Category Level */}
+        <div className="relative flex-1">
+          <div
+            onClick={() => {
+              setShowCategoryLevels(!showCategoryLevels);
+              setShowBusinessUnits(false);
+            }}
+            className="flex justify-between items-center border border-gray-200 rounded-md px-4 py-2 bg-white cursor-pointer"
+          >
+            <span className="text-gray-700">
+              {selectedCategoryLevel || "Select Product Category Level"}
+            </span>
+            <ChevronDown size={18} className="text-gray-400" />
+          </div>
+
+          {showCategoryLevels && (
+            <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+              {categoryLevels.map((item) => (
+                <label
+                  key={item}
+                  onClick={() => handleSelect(item, "category")}
+                  className={`flex items-center gap-2 py-2 px-2 rounded-md cursor-pointer hover:bg-gray-50 ${
+                    selectedCategoryLevel === item ? "bg-gray-100" : ""
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="category"
+                    checked={selectedCategoryLevel === item}
+                    onChange={() => handleSelect(item, "category")}
+                    className="w-4 h-4 text-blue-600 border-gray-300"
+                  />
+                  <span className="text-gray-800 text-sm">{item}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Save Button */}
+        <button
+          type="submit"
+          className="bg-[#EB1700] text-white px-8 py-2 rounded-md font-medium hover:bg-[#d01400] transition"
+        >
+          Save
+        </button>
+      </form>
+    </div>
+  );
+}
+function UdiAssessmentForm() {
+  const [formData, setFormData] = useState({
+    changeNumber: "",
+    udiFiaNumber: "",
+  });
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log("Form Data:", formData);
+  };
+
+  return (
+    <div className="bg-[#FAFAFA] p-6 rounded-[12px] shadow-sm border border-gray-100 w-full max-w-3xl mx-auto">
+      <h2 className="text-lg font-medium mb-4">
+        What UDI assessment are you working on?
+      </h2>
+      <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4 items-center">
+        <input
+          type="text"
+          name="changeNumber"
+          placeholder="Please enter ‘Change Number’"
+          value={formData.changeNumber}
+          onChange={handleChange}
+          className="flex-1 px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-300"
+        />
+        <input
+          type="text"
+          name="udiFiaNumber"
+          placeholder="Please enter ‘UDI FIA Number’"
+          value={formData.udiFiaNumber}
+          onChange={handleChange}
+          className="flex-1 px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-300"
+        />
+        <button
+          type="submit"
+          className="bg-[#EB1700] text-white px-8 py-2 rounded-md font-medium hover:bg-[#d01400] transition"
+        >
+          Save
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function ProductTypeSelector() {
+  const [selected, setSelected] = useState(null);
+
+  const handleSelect = (type) => {
+    setSelected(type);
+  };
+
+  return (
+    <div className="bg-[#FAFAFA] p-6 rounded-[12px] shadow-sm border border-gray-100 w-full max-w-3xl mx-auto">
+      <h2 className="text-lg font-medium mb-6">
+        What type of product are you assessing?
+      </h2>
+
+      <div className="flex flex-col md:flex-row gap-4">
+        {/* MedTech */}
+        <div
+          onClick={() => handleSelect("medtech")}
+          className={`flex flex-col items-center justify-center flex-1 border rounded-[12px] py-8 cursor-pointer transition 
+            ${
+              selected === "medtech"
+                ? "bg-gray-100 border-gray-300"
+                : "bg-white border-gray-200 hover:border-gray-300"
+            }`}
+        >
+          <HeartPulse
+            size={40}
+            className={`${
+              selected === "medtech" ? "text-purple-600" : "text-purple-500"
+            } mb-2`}
+          />
+          <span className="font-medium text-gray-800">MedTech</span>
+        </div>
+
+        {/* Innovative Medicine */}
+        <div
+          onClick={() => handleSelect("medicine")}
+          className={`flex flex-col items-center justify-center flex-1 border rounded-[12px] py-8 cursor-pointer transition 
+            ${
+              selected === "medicine"
+                ? "bg-gray-100 border-gray-300"
+                : "bg-white border-gray-200 hover:border-gray-300"
+            }`}
+        >
+          <Pill
+            size={40}
+            className={`${
+              selected === "medicine" ? "text-red-600" : "text-red-500"
+            } mb-2`}
+          />
+          <span className="font-medium text-gray-800">Innovative Medicine</span>
+        </div>
+      </div>
+
+      {/* Conditional note */}
+      {selected === "medicine" && (
+        <div className="mt-4 border border-[#FEE2E2] bg-[#FEF2F2] text-[#B91C1C] px-4 py-2 rounded-md text-sm italic">
+          Note - There is no active use for UDI Assessments for Innovative
+          Medicine at this time.
+        </div>
+      )}
+    </div>
+  );
+}
+
+const categories = [
+  { id: 1, title: "Legal entity/legal manufacturer", icon: "🏢" },
+  { id: 2, title: "EMDN or GMDN", icon: "🧬" },
+  { id: 3, title: "Expanded Clinical Investigation", icon: "🧪" },
+  { id: 4, title: "Sterilization (method or reusability)", icon: "🧴" },
+  { id: 5, title: "Product Discontinuation and/or Obsolescence", icon: "🗑️" },
+  { id: 6, title: "Direct Part Marking (change or addition)", icon: "🏷️" },
+  { id: 7, title: "Packaging Details", icon: "📦" },
+  { id: 8, title: "Commercial Strategy", icon: "🌍" },
+  { id: 9, title: "Product Materials", icon: "⚠️" },
+  { id: 10, title: "Storage and handling conditions", icon: "❄️" },
+  {
+    id: 11,
+    title: "Labeling",
+    icon: "🏷️",
+    tooltip:
+      "Resulting in creation of a NEW SURGICAL KIT using existing medical devices (Internally or externally) (for Saudi Arabia only)",
+  },
+  { id: 12, title: "Other (Custom)", icon: "➕" },
+];
+
+function ChangeCategoriesSelector() {
+  const [selected, setSelected] = useState(null);
+  const [hovered, setHovered] = useState(null);
+
+  return (
+    <div className="bg-[#FAFAFA] p-6 rounded-[12px] border border-gray-200 shadow-sm max-w-5xl mx-auto">
+      <h2 className="text-lg font-medium mb-6">
+        What change categories are involved in this change?
+      </h2>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        {categories.map((cat) => (
+          <div
+            key={cat.id}
+            onClick={() => setSelected(cat.id)}
+            onMouseEnter={() => setHovered(cat.id)}
+            onMouseLeave={() => setHovered(null)}
+            className={`relative flex flex-col items-center justify-center text-center p-4 border rounded-xl cursor-pointer transition-all duration-200 bg-white shadow-sm ${
+              selected === cat.id
+                ? "border-[#EB1700] shadow-md"
+                : "border-gray-200 hover:border-gray-300"
+            }`}
+          >
+            <div className="text-3xl mb-2">{cat.icon}</div>
+            <p className="text-sm font-medium text-gray-800 leading-tight">
+              {cat.title}
+            </p>
+            {cat.tooltip && (
+              <div className="absolute top-2 right-2">
+                <Info size={14} className="text-gray-400" />
+              </div>
+            )}
+
+            {/* Tooltip */}
+            {hovered === cat.id && cat.tooltip && (
+              <div className="absolute z-10 bottom-full mb-2 w-64 text-xs bg-gray-800 text-white p-2 rounded-md shadow-lg">
+                {cat.tooltip}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="flex justify-center mt-8">
+        <button className="bg-[#EB1700] hover:bg-[#d01400] text-white font-medium px-10 py-2.5 rounded-[12px] shadow-md transition-all">
+          Save
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function EditorCanvas({ items: initialItems }) {
   const items = initialItems || [
-    { id: 1, title: 'Component A', body: 'Main settings for A' },
-    { id: 2, title: 'Component B', body: 'Details about B' },
-    { id: 3, title: 'Component C', body: 'More configuration' },
-    { id: 4, title: 'Component D', body: 'Final touches' },
+    { id: 1, component: <UdiAssessmentForm/> },
+    { id: 2, component: <ProductTypeSelector/> },
+    { id: 3, component: <ProductCategorySelector/> },
+    { id: 4, component: <RegionCountrySelector/>},
+    { id: 5, component: <ChangeCategoriesSelector/>},
+    
   ]
 
   const [active, setActive] = useState(0)
 
-  // optional: keyboard navigation
+  // optional keyboard navigation
   useEffect(() => {
     function onKey(e) {
-      if (e.key === 'ArrowDown') setActive((a) => Math.min(a + 1, items.length - 1))
-      if (e.key === 'ArrowUp') setActive((a) => Math.max(a - 1, 0))
+      if (e.key === "ArrowDown") setActive((a) => Math.min(a + 1, items.length - 1))
+      if (e.key === "ArrowUp") setActive((a) => Math.max(a - 1, 0))
     }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
   }, [items.length])
 
-  function goNext() {
-    setActive((a) => Math.min(a + 1, items.length - 1))
-  }
-  function goPrev() {
-    setActive((a) => Math.max(a - 1, 0))
-  }
+  const goNext = () => setActive((a) => Math.min(a + 1, items.length - 1))
+  const goPrev = () => setActive((a) => Math.max(a - 1, 0))
 
-  // variants for each logical state
+  // animation variants
   const variants = {
-    finished: (custom) => ({
-      y: '-120%',
+    finished: () => ({
+      y: "-120%",
       scale: 0.85,
       opacity: 0,
-      pointerEvents: 'none',
-      transition: { type: 'spring', stiffness: 220, damping: 30 },
+      pointerEvents: "none",
+      transition: { type: "spring", stiffness: 220, damping: 30 },
     }),
-    active: (custom) => ({
-      y: '0%',
+    active: () => ({
+      y: "0%",
       scale: 1,
       opacity: 1,
-      pointerEvents: 'auto',
-      transition: { type: 'spring', stiffness: 200, damping: 18 },
+      pointerEvents: "auto",
+      transition: { type: "spring", stiffness: 200, damping: 18 },
     }),
     next: (custom) => ({
       y: custom === 1 ? 180 : 396,
       scale: custom === 1 ? 0.94 : 0.56,
       opacity: custom === 1 ? 0.7 : 0.35,
-      pointerEvents: 'none',
-      transition: { type: 'spring', stiffness: 180, damping: 20 },
+      pointerEvents: "none",
+      transition: { type: "spring", stiffness: 180, damping: 20 },
     }),
   }
 
   return (
     <div className="h-[80vh] flex-1 rounded-[16px] border-[2px] border-[#EFEFEF] bg-white shadow flex flex-col">
-      {/* Fixed header */}
-      <div className="p-4 border-b border-b-[2px] border-[#EFEFEF] ">
+      {/* Header */}
+      <div className="p-4 border-b border-b-[2px] border-[#EFEFEF]">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold">Main Editor</h3>
           <div className="flex gap-2">
@@ -320,26 +798,20 @@ function EditorCanvas({ items: initialItems }) {
         </div>
       </div>
 
-      {/* Canvas area with dotted background */}
+      {/* Canvas */}
       <div
         className="flex-1 p-4 space-y-4 rounded-[16px] overflow-hidden bg-gray-50 relative"
         style={{
-          backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px)',
-          backgroundSize: '20px 20px',
+          backgroundImage: "radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px)",
+          backgroundSize: "20px 20px",
         }}
       >
-        {/* center stack container */}
         <div className="relative h-full w-full flex items-start justify-center">
-          <div className="w-full max-w-3xl relative" style={{ height: '100%' }}>
+          <div className="w-full max-w-3xl relative" style={{ height: "100%" }}>
             {items.map((it, i) => {
-              // determine the logical state and a small "distance" value used by variants
-              let state = 'next'
-              let dist = i - active
-              if (i < active) state = 'finished'
-              else if (i === active) state = 'active'
-
-              // custom will be used to slightly alter the next-state visuals for the immediate next vs others
-              let custom = dist === 1 ? 1 : 2
+              const state = i < active ? "finished" : i === active ? "active" : "next"
+              const dist = i - active
+              const custom = dist === 1 ? 1 : 2
 
               return (
                 <AnimatePresence key={it.id} initial={false}>
@@ -347,28 +819,15 @@ function EditorCanvas({ items: initialItems }) {
                     key={it.id}
                     custom={custom}
                     variants={variants}
-                    initial={i < active ? 'finished' : i === active ? 'next' : 'next'}
+                    initial={i < active ? "finished" : "next"}
                     animate={state}
-                    exit={'finished'}
-                    className={`absolute left-1/2 -translate-x-1/2 w-full p-6 rounded-2xl shadow-lg bg-white border`}
-                    style={{ top: '20px' }}
+                    exit="finished"
+                    className="absolute left-1/2 -translate-x-1/2 w-full "
+                    style={{ top: "20px" }}
                     aria-hidden={i !== active}
                     transition={{ duration: 0.45 }}
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h4 className="text-lg font-semibold">{it.title}</h4>
-                        <p className="text-sm text-gray-500 mt-2">{it.body}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          className="px-3 py-1 border rounded text-sm"
-                          onClick={() => setActive(i)}
-                        >
-                          Focus
-                        </button>
-                      </div>
-                    </div>
+                    {typeof it.component === "function" ? it.component() : it.component}
                   </motion.div>
                 </AnimatePresence>
               )
@@ -379,6 +838,8 @@ function EditorCanvas({ items: initialItems }) {
     </div>
   )
 }
+
+
 
 
 
