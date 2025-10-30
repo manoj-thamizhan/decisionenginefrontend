@@ -1,8 +1,11 @@
 import React, { useMemo, useState ,useEffect} from 'react'
-import { Routes, Route, Link, useNavigate } from 'react-router-dom'
-import { Plus, Search, Filter, ArrowUpDown, ArrowRight, Info,ArrowLeft, LogOutIcon,HeartPulse, Pill , ChevronDown } from "lucide-react"
+import { Routes, Route, Link, useNavigate,useSearchParams } from 'react-router-dom'
+import { Plus, Search, Filter,Send, ArrowUpDown, ArrowRight, Info,ArrowLeft, LogOutIcon,HeartPulse, Pill , ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from 'framer-motion'
-
+import OneIcon from "./assets/1.svg";
+import TwoIcon from "./assets/2.svg";
+import ThreeIcon from "./assets/3.svg";
+import FourIcon from "./assets/4.svg";
 // NOTE: This single-file component is meant to be dropped into a Tailwind + React project.
 // Install dependencies: react-router-dom, @tanstack/react-table
 function InfoTooltip({ text }) {
@@ -125,11 +128,22 @@ function Dashboard() {
     <div className="space-y-[32px]">
       {/* Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <StatCard title="Total Workflows" number={data.length}><svg className="w-6 h-6" viewBox="0 0 24 24" fill="none"><path d="M3 12h18" strokeWidth="2" stroke="currentColor"/></svg></StatCard>
-        <StatCard title="Pending Review" number={data.filter(d=>d.status!=='Done').length}><svg className="w-6 h-6" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" strokeWidth="2" stroke="currentColor"/></svg></StatCard>
-        <StatCard title="Rejected" number={data.filter(d=>d.status==='Done').length}><svg className="w-6 h-6" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" strokeWidth="2" stroke="currentColor" /></svg></StatCard>
-        <StatCard title="Completed" number={3}><svg className="w-6 h-6" viewBox="0 0 24 24" fill="none"><path d="M12 12a4 4 0 100-8 4 4 0 000 8z" strokeWidth="2" stroke="currentColor" /></svg></StatCard>
-      </div>
+       
+<StatCard title="Total Workflows" number={data.length}>
+  <img src={OneIcon} alt="Total Workflows" className="w-6 h-6" />
+</StatCard>
+
+<StatCard title="Pending Review" number={data.filter(d => d.status !== 'Done').length}>
+  <img src={TwoIcon} alt="Pending Review" className="w-6 h-6" />
+</StatCard>
+
+<StatCard title="Rejected" number={data.filter(d => d.status === 'Done').length}>
+  <img src={ThreeIcon} alt="Rejected" className="w-6 h-6" />
+</StatCard>
+
+<StatCard title="Completed" number={3}>
+  <img src={FourIcon} alt="Completed" className="w-6 h-6" />
+</StatCard>  </div>
 
       {/* Controls: search, filters, sort, CTA */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -680,8 +694,49 @@ const categories = [
 ];
 
 function ChangeCategoriesSelector() {
-  const [selected, setSelected] = useState(null);
+  // selected is an array of selected category ids (numbers)
+  const [selected, setSelected] = useState([]);
   const [hovered, setHovered] = useState(null);
+
+  // react-router hook to read & set search params
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Initialize selected from URL on mount
+  useEffect(() => {
+    const cats = searchParams.get("categories");
+    if (cats) {
+      const ids = cats
+        .split(",")
+        .map((s) => Number(s))
+        .filter((n) => !Number.isNaN(n));
+      setSelected(ids);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount
+
+  // Sync selected -> URL whenever selected changes
+  useEffect(() => {
+    // create plain object from existing params to preserve other params
+    const paramsObj = Object.fromEntries([...searchParams.entries()]);
+
+    if (selected.length > 0) {
+      paramsObj.categories = selected.join(",");
+    } else {
+      // remove the param if nothing selected
+      delete paramsObj.categories;
+    }
+
+    setSearchParams(paramsObj, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected]);
+
+  // toggle selection of a category id
+  const toggle = (id) => {
+    setSelected((prev) => {
+      if (prev.includes(id)) return prev.filter((p) => p !== id);
+      return [...prev, id].sort((a, b) => a - b);
+    });
+  };
 
   return (
     <div className="bg-[#FAFAFA] p-6 rounded-[12px] border border-gray-200 shadow-sm max-w-5xl mx-auto">
@@ -690,71 +745,458 @@ function ChangeCategoriesSelector() {
       </h2>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-        {categories.map((cat) => (
-          <div
-            key={cat.id}
-            onClick={() => setSelected(cat.id)}
-            onMouseEnter={() => setHovered(cat.id)}
-            onMouseLeave={() => setHovered(null)}
-            className={`relative flex flex-col items-center justify-center text-center p-4 border rounded-xl cursor-pointer transition-all duration-200 bg-white shadow-sm ${
-              selected === cat.id
-                ? "border-[#EB1700] shadow-md"
-                : "border-gray-200 hover:border-gray-300"
-            }`}
-          >
-            <div className="text-3xl mb-2">{cat.icon}</div>
-            <p className="text-sm font-medium text-gray-800 leading-tight">
-              {cat.title}
-            </p>
-            {cat.tooltip && (
-              <div className="absolute top-2 right-2">
-                <Info size={14} className="text-gray-400" />
-              </div>
-            )}
+        {categories.map((cat) => {
+          const isSelected = selected.includes(cat.id);
+          return (
+            <div
+              key={cat.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => toggle(cat.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  toggle(cat.id);
+                }
+              }}
+              onMouseEnter={() => setHovered(cat.id)}
+              onMouseLeave={() => setHovered(null)}
+              className={`relative flex flex-col items-center justify-center text-center p-4 border rounded-xl cursor-pointer transition-all duration-200 bg-white shadow-sm ${
+                isSelected
+                  ? "border-[#EB1700] shadow-md"
+                  : "border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <div className="text-3xl mb-2">{cat.icon}</div>
+              <p className="text-sm font-medium text-gray-800 leading-tight">
+                {cat.title}
+              </p>
 
-            {/* Tooltip */}
-            {hovered === cat.id && cat.tooltip && (
-              <div className="absolute z-10 bottom-full mb-2 w-64 text-xs bg-gray-800 text-white p-2 rounded-md shadow-lg">
-                {cat.tooltip}
-              </div>
-            )}
-          </div>
-        ))}
+              {cat.tooltip && (
+                <div className="absolute top-2 right-2">
+                  <Info size={14} className="text-gray-400" />
+                </div>
+              )}
+
+              {/* Tooltip */}
+              {hovered === cat.id && cat.tooltip && (
+                <div className="absolute z-10 bottom-full mb-2 w-64 text-xs bg-gray-800 text-white p-2 rounded-md shadow-lg">
+                  {cat.tooltip}
+                </div>
+              )}
+
+              {/* visual check-mark for multi-select */}
+              {isSelected && (
+                <div className="absolute -top-2 -right-2 bg-white rounded-full p-0.5 border border-gray-200">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-[#EB1700]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <div className="flex justify-center mt-8">
-        <button className="bg-[#EB1700] hover:bg-[#d01400] text-white font-medium px-10 py-2.5 rounded-[12px] shadow-md transition-all">
+        <button
+          onClick={() => {
+            // example action: you can access `selected` directly here or rely on URL param
+            console.log("Selected categories:", selected);
+          }}
+          className="bg-[#EB1700] hover:bg-[#d01400] text-white font-medium px-10 py-2.5 rounded-[12px] shadow-md transition-all"
+        >
           Save
         </button>
       </div>
     </div>
   );
 }
+function SelectedCategoriesForm() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedCategories, setSelectedCategories] = useState([]);
+
+  useEffect(() => {
+    const param = searchParams.get("categories");
+    if (param) {
+      const ids = param
+        .split(",")
+        .map((x) => Number(x))
+        .filter((x) => !Number.isNaN(x));
+      const selected = categories.filter((c) => ids.includes(c.id));
+      setSelectedCategories(selected);
+    } else {
+      setSelectedCategories([]);
+    }
+  }, [searchParams]);
+
+  const [details, setDetails] = useState({});
+
+  const handleSave = (id) => {
+    alert(`Saved for ${categories.find((c) => c.id === id)?.title}: ${details[id] || ""}`);
+  };
+
+  const handleDelete = (id) => {
+    const ids = selectedCategories.map((c) => c.id).filter((x) => x !== id);
+    if (ids.length > 0) searchParams.set("categories", ids.join(","));
+    else searchParams.delete("categories");
+    setSearchParams(searchParams);
+  };
+
+  const handleSubmit = () => {
+    alert("Submitting all category details: " + JSON.stringify(details, null, 2));
+  };
+
+  return (
+    <div className="bg-[#FAFAFA] p-6 rounded-[12px] border border-gray-200 shadow-sm max-w-5xl mx-auto">
+      <h2 className="text-lg font-medium mb-6">
+        What change categories are involved in this change?
+      </h2>
+
+      {selectedCategories.length === 0 ? (
+        <p className="text-gray-500 text-sm">
+          No categories selected. Please select categories first.
+        </p>
+      ) : (
+        <div className="space-y-6">
+          {selectedCategories.map((cat) => (
+            <div
+              key={cat.id}
+              className="flex flex-col sm:flex-row gap-4 border border-gray-200 rounded-xl bg-white p-4 shadow-sm"
+            >
+              {/* Icon and title */}
+              <div className="flex flex-col items-center sm:w-64 text-center sm:text-left">
+                <div className="text-4xl mb-2">{cat.icon}</div>
+                <h3 className="font-medium text-gray-800">{cat.title}</h3>
+              </div>
+
+              {/* Input and buttons */}
+              <div className="flex-1 space-y-3">
+                <label className="block text-sm text-gray-500 mb-1">
+                  Provide more detail from the change request
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter Here"
+                  value={details[cat.id] || ""}
+                  onChange={(e) =>
+                    setDetails((prev) => ({ ...prev, [cat.id]: e.target.value }))
+                  }
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-[#EB1700] focus:border-[#EB1700] outline-none"
+                />
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => handleDelete(cat.id)}
+                    className="border border-[#EB1700] text-[#EB1700] rounded-[8px] px-4 py-1.5 text-sm font-medium hover:bg-[#FFF1F0] transition"
+                  >
+                    Delete
+                  </button>
+                  <button
+                    onClick={() => handleSave(cat.id)}
+                    className="border border-[#EB1700] text-[#EB1700] rounded-[8px] px-4 py-1.5 text-sm font-medium hover:bg-[#FFF1F0] transition"
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {selectedCategories.length > 0 && (
+        <div className="flex justify-center mt-8">
+          <button
+            onClick={handleSubmit}
+            className="bg-[#EB1700] hover:bg-[#d01400] text-white font-medium px-10 py-2.5 rounded-[12px] shadow-md transition-all"
+          >
+            Submit
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+function GTINChangeEvaluation({ initial = 'yes', onChange }) {
+const [selected, setSelected] = useState(initial);
+
+
+function handleSelect(value) {
+setSelected(value);
+if (typeof onChange === 'function') onChange(value);
+}
+
+
+const optionBase = 'flex-1 rounded-lg border px-6 py-3 cursor-pointer transition-shadow duration-150';
+const selectedClasses = 'border-green-400 shadow-sm ring-2 ring-green-200 bg-white';
+const unselectedClasses = 'border-gray-200 bg-white hover:shadow-sm';
+
+
+return (
+<div className="max-w-3xl mx-auto p-6">
+<div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
+<h3 className="text-sm font-medium text-gray-700 mb-4">GTIN Change Evaluation</h3>
+
+
+<div className="flex gap-4">
+<button
+type="button"
+aria-pressed={selected === 'yes'}
+onClick={() => handleSelect('yes')}
+className={`${optionBase} ${selected === 'yes' ? selectedClasses : unselectedClasses} text-green-700 font-medium text-center`}
+>
+Yes
+</button>
+
+
+<button
+type="button"
+aria-pressed={selected === 'no'}
+onClick={() => handleSelect('no')}
+className={`${optionBase} ${selected === 'no' ? 'border-gray-400 shadow-sm' : unselectedClasses} text-gray-700 font-medium text-center`}
+>
+No
+</button>
+
+
+<button
+type="button"
+aria-pressed={selected === 'retention'}
+onClick={() => handleSelect('retention')}
+className={`${optionBase} ${selected === 'retention' ? 'border-gray-400 shadow-sm' : unselectedClasses} text-gray-700 font-medium text-center`}
+>
+GTIN Retention
+</button>
+</div>
+
+
+<p className="mt-3 text-xs text-gray-500">
+GTIN Retention - Option for approval to keep same GTIN, complete form{' '}
+<span className="text-red-600 italic font-medium">501394274</span>
+</p>
+</div>
+</div>
+);
+}
+
+function UdiRecordImpactSelector() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const selected = searchParams.get("udi_record_impact") || ""
+
+  const options = ["Yes", "No", "Pending Review"]
+
+  const handleSelect = (value) => {
+    const newParams = new URLSearchParams(searchParams)
+    newParams.set("udi_record_impact", value)
+    setSearchParams(newParams)
+  }
+
+  return (
+    <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+      <h3 className="text-sm font-medium mb-3">UDI Health Authority Record Impact</h3>
+      <div className="flex gap-3">
+        {options.map((opt) => (
+          <button
+            key={opt}
+            onClick={() => handleSelect(opt)}
+            className={`flex-1 px-4 py-2 rounded-lg border text-sm font-medium transition-all
+              ${
+                selected === opt
+                  ? "border-green-500 text-green-700 bg-green-50"
+                  : "border-gray-300 text-gray-600 hover:border-gray-400"
+              }`}
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function GtinImpactQuestion() {
+  const [selected, setSelected] = useState(null);
+
+  const options = [
+    {
+      value: "Yes",
+      description:
+        "This change impact resulted in a new GTIN which is a new UDI HA record, therefore update to the existing UDI HA record does not apply.",
+    },
+    {
+      value: "No",
+      description:
+        "This change requires updates to the required data sources and to the UDI HA Record(s). Refer to Form 502082335 for selection of data sources to be actioned for this change control.",
+    },
+  ];
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 w-full">
+      <h2 className="text-lg font-semibold mb-6">
+        Did this change impact result in a new GTIN?
+      </h2>
+
+      <div className="flex flex-col md:flex-row gap-4">
+        {options.map((opt) => (
+          <div key={opt.value} className="flex-1 text-center">
+            <button
+              onClick={() => setSelected(opt.value)}
+              className={`w-full py-3 rounded-xl border text-base font-medium transition-all duration-200 ${
+                selected === opt.value
+                  ? "border-green-600 text-green-700 bg-green-50"
+                  : "border-gray-200 hover:border-gray-400"
+              }`}
+            >
+              {opt.value}
+            </button>
+
+            <p className="text-xs text-gray-600 mt-3 leading-snug">
+              {opt.description}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function NotifyWorkflowSummary() {
+  return (
+    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 w-full">
+      <h2 className="text-lg font-semibold mb-4">
+        Notify Change Owner & Generate Workflow Summary
+      </h2>
+
+      <button
+        className="flex items-center justify-center gap-2 bg-[#EB1700] text-white font-medium px-6 py-2 rounded-md shadow hover:bg-[#d01400] transition-all"
+      >
+        <Send size={16} />
+        Send
+      </button>
+
+      <p className="text-sm text-gray-500 mt-3">
+        Send Notification & Workflow Outcome Report
+      </p>
+    </div>
+  );
+}
+
+function NotifyWorkflowSummaryLast() {
+  const [searchParams] = useSearchParams();
+
+  const details = {
+    changeNumber: searchParams.get("changeNumber") || "CR-10234",
+    gtinOutcome: searchParams.get("gtinOutcome") || "New GTIN Assigned",
+    udiImpact: searchParams.get("udiImpact") || "Submitted to FDA GUDID",
+    action: searchParams.get("action") || "Regulatory notified",
+    status: searchParams.get("status") || "Completed",
+  };
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 w-full">
+      <h2 className="text-lg font-semibold mb-6">
+        Notify Change Owner & Generate Workflow Summary
+      </h2>
+
+      {/* Info boxes */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <InfoBox label="Change Number" value={details.changeNumber} />
+        <InfoBox label="GTIN Change Outcome" value={details.gtinOutcome} />
+        <InfoBox label="UDI HA Database Impact" value={details.udiImpact} />
+        <InfoBox label="Action" value={details.action} />
+        <InfoBox label="Status" value={details.status} />
+      </div>
+
+      {/* Buttons */}
+      <div className="flex flex-wrap gap-3">
+        <button className="border border-gray-300 text-gray-700 font-medium px-5 py-2 rounded-md hover:bg-gray-50 transition-all">
+          Download Report
+        </button>
+        <button className="bg-[#EB1700] text-white font-medium px-5 py-2 rounded-md shadow hover:bg-[#d01400] transition-all">
+          Notify Stakeholders
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function InfoBox({ label, value }) {
+  return (
+    <div className="border border-gray-200 rounded-lg p-3 text-center">
+      <div className="text-sm text-gray-500">{label}</div>
+      <div className="text-sm font-medium text-gray-800 mt-1">{value}</div>
+    </div>
+  );
+}
 
 function EditorCanvas({ items: initialItems }) {
-  const items = initialItems || [
+    const [searchParams,setSearchParams] = useSearchParams()
+  const udi_record_impact = searchParams.get("udi_record_impact")
+  const baseItems = initialItems || [
     { id: 1, component: <UdiAssessmentForm/> },
     { id: 2, component: <ProductTypeSelector/> },
     { id: 3, component: <ProductCategorySelector/> },
     { id: 4, component: <RegionCountrySelector/>},
     { id: 5, component: <ChangeCategoriesSelector/>},
+    { id: 6, component: <SelectedCategoriesForm/>},
+    { id: 7, component: <GTINChangeEvaluation/>},
+    { id: 8, component: <UdiRecordImpactSelector/>},
+    { id: 9, component: <GtinImpactQuestion/>},
+    { id: 10, component: <NotifyWorkflowSummary/>},
+    { id: 11, component: <NotifyWorkflowSummaryLast/>},
+    
+    
+
+    
+    
+    
     
   ]
 
-  const [active, setActive] = useState(0)
+    if (udi_record_impact === "Yes") {
+    baseItems.splice(8, 0, { id: 999, component: <GtinImpactQuestion/> })
+  }
+
+  const items = baseItems;
+
+const stepParam = parseInt(searchParams.get("step") || "1", 10)
+const active = Math.min(Math.max(stepParam - 1, 0), (items?.length || 0) - 1)
+
 
   // optional keyboard navigation
   useEffect(() => {
     function onKey(e) {
-      if (e.key === "ArrowDown") setActive((a) => Math.min(a + 1, items.length - 1))
-      if (e.key === "ArrowUp") setActive((a) => Math.max(a - 1, 0))
+      if (e.key === "ArrowDown") goNext()
+      if (e.key === "ArrowUp") goPrev()
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
   }, [items.length])
 
-  const goNext = () => setActive((a) => Math.min(a + 1, items.length - 1))
-  const goPrev = () => setActive((a) => Math.max(a - 1, 0))
+const goNext = () => {
+  const next = Math.min(active + 1, items.length - 1)
+  const params = Object.fromEntries(searchParams)
+  params.step = String(next + 1) // keep URL step 1-based
+  setSearchParams(params)
+}
+
+const goPrev = () => {
+  const prev = Math.max(active - 1, 0)
+  const params = Object.fromEntries(searchParams)
+  params.step = String(prev + 1)
+  setSearchParams(params)
+}
 
   // animation variants
   const variants = {
@@ -788,12 +1230,9 @@ function EditorCanvas({ items: initialItems }) {
         <div className="flex items-center justify-between">
           <h3 className="font-semibold">Main Editor</h3>
           <div className="flex gap-2">
-            <button onClick={goPrev} className="border px-3 py-1 rounded">
-              Prev
-            </button>
-            <button onClick={goNext} className="bg-blue-600 text-white px-3 py-1 rounded">
-              Next
-            </button>
+              <button onClick={goPrev} className="flex items-center justify-center h-[36px] w-[36px] border-[#EFEFEF] border-[2px] rounded-[10px]"><ArrowLeft size={24} className="text-gray-500" /></button>
+              <button onClick={goNext} className="flex items-center justify-center h-[36px] w-[36px] border-[#EFEFEF] border-[2px] rounded-[10px]"><ArrowRight size={24} className="text-gray-500" /></button>
+            
           </div>
         </div>
       </div>
@@ -822,7 +1261,7 @@ function EditorCanvas({ items: initialItems }) {
                     initial={i < active ? "finished" : "next"}
                     animate={state}
                     exit="finished"
-                    className="absolute left-1/2 -translate-x-1/2 w-full "
+                    className={`absolute left-1/2 -translate-x-1/2 w-full ${i === active ? 'z-50' : 'z-10'}`}
                     style={{ top: "20px" }}
                     aria-hidden={i !== active}
                     transition={{ duration: 0.45 }}
@@ -854,19 +1293,13 @@ function CreateRecord() {
         <div className="h-[80vh] w-72 rounded-[16px] bg-white shadow flex flex-col">
           {/* Fixed header */}
           <div className="p-4 border-b border-gray-200">
-            <h3 className="font-semibold mb-1">Small Panel</h3>
-            <p className="text-sm text-gray-600">
-              This panel is narrow (fixed width) and scrollable.
-            </p>
+            <h3 className="font-semibold mb-1">Decision Workflow</h3>
+            
           </div>
 
           {/* Scrollable content */}
           <div className="flex-1 overflow-auto p-4 space-y-2">
-            {Array.from({ length: 30 }).map((_, i) => (
-              <div key={i} className="p-2 border rounded">
-                Field {i + 1}
-              </div>
-            ))}
+            
           </div>
         </div>
 
