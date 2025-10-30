@@ -6,6 +6,7 @@ import OneIcon from "./assets/1.svg";
 import TwoIcon from "./assets/2.svg";
 import ThreeIcon from "./assets/3.svg";
 import FourIcon from "./assets/4.svg";
+import { createWorkflow, patchWorkflow } from './apiservice';
 // NOTE: This single-file component is meant to be dropped into a Tailwind + React project.
 // Install dependencies: react-router-dom, @tanstack/react-table
 function InfoTooltip({ text }) {
@@ -277,7 +278,8 @@ function RegionCountrySelector() {
   const [countrySearch, setCountrySearch] = useState("");
   const [selectedRegion, setSelectedRegion] = useState(null); // single
   const [selectedCountry, setSelectedCountry] = useState(null); // single
-
+  const [searchParams] = useSearchParams();
+  const workflowId = searchParams.get("workflow_id");
   const regions = [
     "Asia Pacific (APAC)",
     "Europe (EU)",
@@ -325,31 +327,104 @@ function RegionCountrySelector() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+    const patchRegion = async (region) => {
+    if (!workflowId) {
+      alert("Please create a workflow first.");
+      return;
+    }
+    try {
+      const payload = { region };
+      const res = await patchWorkflow(payload, workflowId);
+      console.log("Patched region:", res);
+      // optional: show toast/notification based on res
+    } catch (err) {
+      console.error("Error patching region:", err);
+      alert("Failed to update region.");
+    }
+  };
+
+  const patchCountry = async (countryObj) => {
+    if (!workflowId) {
+      alert("Please create a workflow first.");
+      return;
+    }
+    try {
+      // Send both name and code to be safe — adjust to your backend schema if needed
+      const payload = {
+        country: countryObj.name,
+        country_code: countryObj.code,
+      };
+      const res = await patchWorkflow(payload, workflowId);
+      console.log("Patched country:", res);
+    } catch (err) {
+      console.error("Error patching country:", err);
+      alert("Failed to update country.");
+    }
+  };
+
   const onSelectRegion = (region) => {
     if (region === selectedRegion) {
-      // unselecting allowed? per requirement, we keep exactly one region OR allow none.
-      // We'll keep behavior: clicking same region unselects it and clears country.
+      // unselect — clear region + country
       setSelectedRegion(null);
       setSelectedCountry(null);
       setShowRegions(false);
       setShowCountries(false);
+      // Optionally clear on backend: send region = null (uncomment if desired)
+      // patchRegion(null);
     } else {
       setSelectedRegion(region);
-      setSelectedCountry(null); // clear previous country
+      setSelectedCountry(null);
       setShowRegions(false);
-      setShowCountries(true); // open country dropdown for chosen region
+      setShowCountries(true);
       setCountrySearch("");
+
+      // optimistic backend update
+      patchRegion(region);
     }
   };
 
-  const onSelectCountry = (countryName) => {
-    if (countryName === selectedCountry) {
+  const onSelectCountry = (countryObj) => {
+    const isSame =
+      selectedCountry && selectedCountry.code === countryObj.code;
+    if (isSame) {
       setSelectedCountry(null);
     } else {
-      setSelectedCountry(countryName);
+      setSelectedCountry(countryObj);
     }
     setShowCountries(false);
+
+    // optimistic backend update
+    if (!isSame) patchCountry(countryObj);
+    // if unselecting and you want to remove country from backend, you could call:
+    // else patchCountry({ name: null, code: null });
   };
+
+
+  // const onSelectRegion = (region) => {
+  //   if (region === selectedRegion) {
+  //     // unselecting allowed? per requirement, we keep exactly one region OR allow none.
+  //     // We'll keep behavior: clicking same region unselects it and clears country.
+  //     setSelectedRegion(null);
+  //     setSelectedCountry(null);
+  //     setShowRegions(false);
+  //     setShowCountries(false);
+  //   } else {
+  //     setSelectedRegion(region);
+  //     setSelectedCountry(null); // clear previous country
+  //     setShowRegions(false);
+  //     setShowCountries(true); // open country dropdown for chosen region
+  //     setCountrySearch("");
+  //   }
+  // };
+
+  // const onSelectCountry = (countryName) => {
+  //   if (countryName === selectedCountry) {
+  //     setSelectedCountry(null);
+  //   } else {
+  //     setSelectedCountry(countryName);
+  //   }
+  //   setShowCountries(false);
+  // };
 
   return (
     <div ref={wrapperRef} className="bg-[#FAFAFA] p-6 rounded-[12px] shadow-sm border border-gray-100 w-full max-w-5xl mx-auto relative">
@@ -491,6 +566,8 @@ function RegionCountrySelector() {
   );
 }
 function ProductCategorySelector() {
+  const [searchParams] = useSearchParams();
+const workflowId = searchParams.get("workflow_id");
   const [showBusinessUnits, setShowBusinessUnits] = useState(false);
   const [showCategoryLevels, setShowCategoryLevels] = useState(false);
   const [selectedBusinessUnit, setSelectedBusinessUnit] = useState("");
@@ -525,14 +602,33 @@ function ProductCategorySelector() {
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log({
-      businessUnit: selectedBusinessUnit,
-      categoryLevel: selectedCategoryLevel,
-    });
-  };
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
+  if (!workflowId) {
+    alert("Please create a workflow first before saving this step.");
+    return;
+  }
+
+  try {
+    const payload = {
+      business_unit: selectedBusinessUnit,
+      product_category_level: selectedCategoryLevel,
+    };
+
+    const response = await patchWorkflow(payload, workflowId);
+
+    if (response && (response.success || response.id)) {
+      alert("Workflow updated successfully!");
+      console.log("Workflow patched:", response);
+    } else {
+      alert("Failed to update workflow");
+    }
+  } catch (err) {
+    console.error("Error updating workflow:", err);
+    alert("Something went wrong while updating workflow.");
+  }
+};
   return (
     <div className="bg-[#FAFAFA] p-6 rounded-[12px] shadow-sm border border-gray-100 w-full max-w-4xl mx-auto relative">
       <h2 className="text-lg font-medium mb-6">Select product category</h2>
@@ -631,21 +727,49 @@ function ProductCategorySelector() {
   );
 }
 function UdiAssessmentForm() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const workflowId = searchParams.get('workflow_id')
   const [formData, setFormData] = useState({
-    changeNumber: "",
-    udiFiaNumber: "",
+    change_number: "",
+    udr_fia_number: "",
   });
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    });
+    }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form Data:", formData);
+
+    try {
+      let response;
+
+      if (workflowId) {
+        // PATCH (update) expects backend keys exactly as serializer/model
+        response = await patchWorkflow (formData, workflowId);
+        console.log("Workflow updated:", response);
+      } else {
+        // Create new workflow
+        response = await createWorkflow(formData);
+        if (response?.data?.id) {
+          searchParams.set("workflow_id", response?.data?.id);
+          setSearchParams(searchParams);
+        }
+        console.log("Workflow created:", response);
+      }
+
+      if (response && response.success) {
+        alert(`Workflow ${workflowId ? "updated" : "created"} successfully!`);
+      } else {
+        alert(`Failed to ${workflowId ? "update" : "create"} workflow`);
+      }
+    } catch (err) {
+      console.error("Error submitting form:", err);
+      alert("Something went wrong!");
+    }
   };
 
   return (
@@ -653,20 +777,23 @@ function UdiAssessmentForm() {
       <h2 className="text-lg font-medium mb-4">
         What UDI assessment are you working on?
       </h2>
-      <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4 items-center">
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col md:flex-row gap-4 items-center"
+      >
         <input
           type="text"
-          name="changeNumber"
+          name="change_number"
           placeholder="Please enter ‘Change Number’"
-          value={formData.changeNumber}
+          value={formData.change_number}
           onChange={handleChange}
           className="flex-1 px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-300"
         />
         <input
           type="text"
-          name="udiFiaNumber"
-          placeholder="Please enter ‘UDI FIA Number’"
-          value={formData.udiFiaNumber}
+          name="udr_fia_number"
+          placeholder="Please enter ‘UDR FIA Number’"
+          value={formData.udr_fia_number}
           onChange={handleChange}
           className="flex-1 px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-300"
         />
@@ -680,13 +807,34 @@ function UdiAssessmentForm() {
     </div>
   );
 }
-
 function ProductTypeSelector() {
   const [selected, setSelected] = useState(null);
-
-  const handleSelect = (type) => {
+  const [searchParams] = useSearchParams();
+  const workflowId = searchParams.get("workflow_id");
+ const handleSelect = async (type) => {
     setSelected(type);
+
+    // ✅ If workflow_id exists, patch immediately
+    if (!workflowId) {
+      alert("Please create a UDI workflow first.");
+      return;
+    }
+
+    try {
+      const payload = { product_type: type };
+      const response = await patchWorkflow(payload, workflowId);
+
+      if (response && (response.success || response.id)) {
+        console.log("Product type updated:", response);
+      } else {
+        alert("Failed to update product type");
+      }
+    } catch (err) {
+      console.error("Error updating product type:", err);
+      alert("Something went wrong while updating product type.");
+    }
   };
+
 
   return (
     <div className="bg-[#FAFAFA] p-6 rounded-[12px] shadow-sm border border-gray-100 w-full max-w-3xl mx-auto">
