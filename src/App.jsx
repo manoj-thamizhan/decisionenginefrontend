@@ -6,7 +6,7 @@ import OneIcon from "./assets/1.svg";
 import TwoIcon from "./assets/2.svg";
 import ThreeIcon from "./assets/3.svg";
 import FourIcon from "./assets/4.svg";
-import { createWorkflow, patchWorkflow } from './apiservice';
+import { createWorkflow, patchWorkflow, getWorkflows,createChangeinvolved } from './apiservice';
 // NOTE: This single-file component is meant to be dropped into a Tailwind + React project.
 // Install dependencies: react-router-dom, @tanstack/react-table
 function InfoTooltip({ text }) {
@@ -119,14 +119,80 @@ const makeData = () => {
   ]
 }
 function Dashboard() {
-  const [data, setData] = useState(() => makeData())
+  const [data, setData] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [globalFilter, setGlobalFilter] = useState('')
   const [page, setPage] = useState(1)
   const pageSize = 10
+  const [params,setParams] = useSearchParams();
+  const search = params.get("search") || '';
+  useEffect(() => {
+    const fetchWorkflows = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const response = await getWorkflows({ search })
 
+        if (response.success) {
+          const transformedData = response.data.map(item => ({
+            id: item.id,
+            change_number: item.change_number || 'N/A',
+            udi_fia_number: item.udr_fia_number || 'N/A',
+            title: item.title || 'Untitled',
+            region: item.region || 'Not specified',
+            udi_database: 'Not specified', 
+            gtin_change: item.gtin_change || 'No',
+              status: item.status || 'Pending Review', 
+              assessor: 'Not assigned', 
+            date: item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            product_type: item.product_type,
+            product_category_unit: item.product_category_unit,
+            product_category_level: item.product_category_level,
+            gtin_evaluation: item.gtin_evaluation,
+            has_udi_health_impact: item.has_udi_health_impact,
+            has_impact_in_new_gtin: item.has_impact_in_new_gtin,
+            created_at: item.created_at,
+            updated_at: item.updated_at
+          }))
+          setData(transformedData)
+        } else {
+          setError(response.error || 'Failed to fetch workflows')
+          setData(makeData())
+        }
+      } catch (err) {
+        console.error('Error fetching workflows:', err)
+        setError('Failed to fetch workflows')
+        setData(makeData())
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchWorkflows()
+  }, [search])
+
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#EB1700] mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading workflows...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-[32px]">
+      {/* Error message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-sm text-red-500 mt-1">Showing fallback data</p>
+        </div>
+      )}
+
       {/* Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
        
@@ -134,15 +200,15 @@ function Dashboard() {
   <img src={OneIcon} alt="Total Workflows" className="w-6 h-6" />
 </StatCard>
 
-<StatCard title="Pending Review" number={data.filter(d => d.status !== 'Done').length}>
+<StatCard title="Pending Review" number={data.filter(d => d.status === 'Pending Review').length}>
   <img src={TwoIcon} alt="Pending Review" className="w-6 h-6" />
 </StatCard>
 
-<StatCard title="Rejected" number={data.filter(d => d.status === 'Done').length}>
+<StatCard title="Rejected" number={data.filter(d => d.status === 'Rejected').length}>
   <img src={ThreeIcon} alt="Rejected" className="w-6 h-6" />
 </StatCard>
 
-<StatCard title="Completed" number={3}>
+<StatCard title="Completed" number={data.filter(d => d.status === 'Completed').length}>
   <img src={FourIcon} alt="Completed" className="w-6 h-6" />
 </StatCard>  </div>
 
@@ -162,9 +228,10 @@ function Dashboard() {
         <div className="flex items-center border border-[#EFEFEF] bg-white rounded-[12px] px-3 py-2">
           <Search size={16} className="text-gray-500 mr-2" />
           <input
-            value={globalFilter}
+            type="text"
+            value={search}
             onChange={(e) => {
-              setGlobalFilter(e.target.value)
+              setParams({ search: e.target.value })
               setPage(1)
             }}
             placeholder="Search"
@@ -219,36 +286,51 @@ function Dashboard() {
           </thead>
 
           <tbody>
-            {data.map((row, i) => (
-              <tr key={i} className="border-t border-[#E5E7EB] hover:bg-gray-50">
-                <td className="px-4 py-[20px] text-[12px] font-bold">{row.change_number}</td>
-                <td className="px-4 py-[20px] text-[12px] font-bold">{row.udi_fia_number}</td>
-                <td className="px-4 py-[20px] text-[12px]">{row.title}</td>
-                <td className="px-4 py-[20px] text-[12px]">{row.region}
-  <InfoTooltip text={row.region} />
-                </td>
-                <td className="px-4 py-[20px] text-[12px]">{row.udi_database}</td>
-                <td className="px-4 py-[20px] text-[12px]">{row.gtin_change}</td>
-                <td className="px-4 py-[20px] text-[12px]">
-                  {row.status === 'Completed' && (
-                    <span className="bg-[#D1FAE5] text-[#065F46] text-xs px-2 py-1 rounded-md">Completed</span>
-                  )}
-                  {row.status === 'Pending Review' && (
-                    <span className="bg-[#FEF3C7] text-[#92400E] text-xs px-2 py-1 rounded-md">Pending Review</span>
-                  )}
-                  {row.status === 'Rejected' && (
-                    <span className="bg-[#FEE2E2] text-[#991B1B] text-xs px-2 py-1 rounded-md">Rejected</span>
-                  )}
-                </td>
-                <td className="px-4 py-[20px] text-[12px]">{row.assessor}</td>
-                <td className="px-4 py-[20px] text-[12px]">{row.date}</td>
-                <td className="px-4 py-[20px] flex gap-2">
-                  <button className="border border-[#EFEFEF] rounded-[8px] px-3 py-1 text-sm">View</button>
-                  <button className="border border-[#EFEFEF] rounded-[8px] px-3 py-1 text-sm">Edit</button>
-                  <button className="border border-[#EFEFEF] rounded-[8px] px-3 py-1 text-sm">Export</button>
+            {data.length > 0 ? (
+              data.map((row) => (
+                <tr key={row.id || row.change_number} className="border-t border-[#E5E7EB] hover:bg-gray-50">
+                  <td className="px-4 py-[20px] text-[12px] font-bold">{row.change_number || 'N/A'}</td>
+                  <td className="px-4 py-[20px] text-[12px] font-bold">{row.udi_fia_number || 'N/A'}</td>
+                  <td className="px-4 py-[20px] text-[12px]">{row.title || 'Untitled'}</td>
+                  <td className="px-4 py-[20px] text-[12px]">{row.region || 'Not specified'}
+    <InfoTooltip text={row.region || 'Not specified'} />
+                  </td>
+                  <td className="px-4 py-[20px] text-[12px]">{row.udi_database || 'Not specified'}</td>
+                  <td className="px-4 py-[20px] text-[12px]">{row.gtin_change || 'No'}</td>
+                  <td className="px-4 py-[20px] text-[12px]">
+                    {row.status === 'Completed' && (
+                      <span className="bg-[#D1FAE5] text-[#065F46] text-xs px-2 py-1 rounded-md">Completed</span>
+                    )}
+                    {row.status === 'Pending Review' && (
+                      <span className="bg-[#FEF3C7] text-[#92400E] text-xs px-2 py-1 rounded-md">Pending Review</span>
+                    )}
+                    {row.status === 'Rejected' && (
+                      <span className="bg-[#FEE2E2] text-[#991B1B] text-xs px-2 py-1 rounded-md">Rejected</span>
+                    )}
+                    {!row.status || !['Completed', 'Pending Review', 'Rejected'].includes(row.status) && (
+                      <span className="bg-[#FEF3C7] text-[#92400E] text-xs px-2 py-1 rounded-md">Pending Review</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-[20px] text-[12px]">{row.assessor || 'Not assigned'}</td>
+                  <td className="px-4 py-[20px] text-[12px]">{row.date || 'N/A'}</td>
+                  <td className="px-4 py-[20px] flex gap-2">
+                    <button className="border border-[#EFEFEF] rounded-[8px] px-3 py-1 text-sm">View</button>
+                    <button className="border border-[#EFEFEF] rounded-[8px] px-3 py-1 text-sm">Edit</button>
+                    <button className="border border-[#EFEFEF] rounded-[8px] px-3 py-1 text-sm">Export</button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="10" className="px-4 py-12 text-center text-gray-500">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="text-4xl">📋</div>
+                    <div className="text-lg font-medium">No workflows found</div>
+                    <div className="text-sm">Create a new workflow to get started</div>
+                  </div>
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
@@ -1033,7 +1115,6 @@ function ChangeCategoriesSelector() {
       <div className="flex justify-center mt-8">
         <button
           onClick={() => {
-            // example action: you can access `selected` directly here or rely on URL param
             console.log("Selected categories:", selected);
           }}
           className="bg-[#EB1700] hover:bg-[#d01400] text-white font-medium px-10 py-2.5 rounded-[12px] shadow-md transition-all"
@@ -1047,6 +1128,7 @@ function ChangeCategoriesSelector() {
 function SelectedCategoriesForm() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const workflowId = searchParams.get('workflow_id');
 
   useEffect(() => {
     const param = searchParams.get("categories");
@@ -1064,8 +1146,35 @@ function SelectedCategoriesForm() {
 
   const [details, setDetails] = useState({});
 
-  const handleSave = (id) => {
-    alert(`Saved for ${categories.find((c) => c.id === id)?.title}: ${details[id] || ""}`);
+  const saveChangeinvolved = async (categoryId, detail) => {
+    if (!workflowId) {
+      alert("Please create a workflow first.");
+      return;
+    }
+    try {
+      const categoryTitle = categories.find((c) => c.id === categoryId)?.title;
+      const payload = { 
+        workflow: workflowId,
+        change_category: categoryTitle,
+        change_description: detail
+      };
+      const response = await createChangeinvolved(payload);
+      console.log("Created changes-involved record:", response);
+      
+      if (response.success) {
+        alert(`Successfully saved detail for ${categoryTitle}`);
+      } else {
+        alert("Failed to create changes-involved record.");
+      }
+    } catch (err) {
+      console.error("Error creating changes-involved record:", err);
+      alert("Failed to create changes-involved record.");
+    }
+  };
+
+  const handleSave = async (id) => {
+    const detail = details[id] || "";
+    await saveChangeinvolved(id, detail);
   };
 
   const handleDelete = (id) => {
@@ -1075,8 +1184,24 @@ function SelectedCategoriesForm() {
     setSearchParams(searchParams);
   };
 
-  const handleSubmit = () => {
-    alert("Submitting all category details: " + JSON.stringify(details, null, 2));
+  const handleSubmit = async () => {
+    if (!workflowId) {
+      alert("Please create a workflow first.");
+      return;
+    }
+    
+    try {
+      const payload = { 
+        all_category_details: details,
+        category_details_completed: true
+      };
+      const response = await patchWorkflow(payload, workflowId);
+      console.log("Submitted all category details:", response);
+      alert("All category details submitted successfully!");
+    } catch (err) {
+      console.error("Error submitting category details:", err);
+      alert("Failed to submit category details.");
+    }
   };
 
   return (
@@ -1151,10 +1276,27 @@ function SelectedCategoriesForm() {
 }
 function GTINChangeEvaluation({ initial = 'yes', onChange }) {
 const [selected, setSelected] = useState(initial);
+const [searchParams] = useSearchParams();
+const workflowId = searchParams.get('workflow_id');
 
+const patchGTINChange = async (value) => {
+  if (!workflowId) {
+    alert("Please create a workflow first.");
+    return;
+  }
+  try {
+    const payload = { gtin_evaluation: value };
+    const response = await patchWorkflow(payload, workflowId);
+    console.log("Patched GTIN change evaluation:", response);
+  } catch (err) {
+    console.error("Error patching GTIN change evaluation:", err);
+    alert("Failed to update GTIN change evaluation.");
+  }
+};
 
 function handleSelect(value) {
 setSelected(value);
+patchGTINChange(value);
 if (typeof onChange === 'function') onChange(value);
 }
 
@@ -1214,13 +1356,30 @@ GTIN Retention - Option for approval to keep same GTIN, complete form{' '}
 function UdiRecordImpactSelector() {
   const [searchParams, setSearchParams] = useSearchParams()
   const selected = searchParams.get("udi_record_impact") || ""
+  const workflowId = searchParams.get('workflow_id');
 
   const options = ["Yes", "No", "Pending Review"]
+
+  const patchUdiRecordImpact = async (value) => {
+    if (!workflowId) {
+      alert("Please create a workflow first.");
+      return;
+    }
+    try {
+      const payload = { has_udi_health_impact: value };
+      const response = await patchWorkflow(payload, workflowId);
+      console.log("Patched UDI record impact:", response);
+    } catch (err) {
+      console.error("Error patching UDI record impact:", err);
+      alert("Failed to update UDI record impact.");
+    }
+  };
 
   const handleSelect = (value) => {
     const newParams = new URLSearchParams(searchParams)
     newParams.set("udi_record_impact", value)
     setSearchParams(newParams)
+    patchUdiRecordImpact(value);
   }
 
   return (
@@ -1248,6 +1407,28 @@ function UdiRecordImpactSelector() {
 
 function GtinImpactQuestion() {
   const [selected, setSelected] = useState(null);
+  const [searchParams] = useSearchParams();
+  const workflowId = searchParams.get('workflow_id');
+
+  const patchGtinImpact = async (value) => {
+    if (!workflowId) {
+      alert("Please create a workflow first.");
+      return;
+    }
+    try {
+      const payload = { gtin_change: value };
+      const response = await patchWorkflow(payload, workflowId);
+      console.log("Patched GTIN impact question:", response);
+    } catch (err) {
+      console.error("Error patching GTIN impact question:", err);
+      alert("Failed to update GTIN impact question.");
+    }
+  };
+
+  const handleSelect = (value) => {
+    setSelected(value);
+    patchGtinImpact(value);
+  };
 
   const options = [
     {
@@ -1272,7 +1453,7 @@ function GtinImpactQuestion() {
         {options.map((opt) => (
           <div key={opt.value} className="flex-1 text-center">
             <button
-              onClick={() => setSelected(opt.value)}
+              onClick={() => handleSelect(opt.value)}
               className={`w-full py-3 rounded-xl border text-base font-medium transition-all duration-200 ${
                 selected === opt.value
                   ? "border-green-600 text-green-700 bg-green-50"

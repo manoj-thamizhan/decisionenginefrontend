@@ -1,5 +1,21 @@
 import apiClient from "./apiclient";
 
+// Get all workflows
+export async function getWorkflows({ search = "" }) {
+  try {
+    const params = new URLSearchParams();
+    if (search) {
+      params.append("search", search);
+    }
+    const response = await apiClient.get(`/api/workflows/?${params.toString()}`);
+    
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("Failed to fetch workflows:", error.response?.data || error.message);
+    return { success: false, error: error.response?.data || error.message };
+  }
+}
+
 // Create a new workflow
 export async function createWorkflow(data) {
   try {
@@ -7,6 +23,16 @@ export async function createWorkflow(data) {
     return { success: true, data: response.data };
   } catch (error) {
     console.error("Failed to create workflow:", error.response?.data || error.message);
+    return { success: false, error: error.response?.data || error.message };
+  }
+}
+// Create a new changes-involved workflow
+export async function createChangeinvolved(data) {
+  try {
+    const response = await apiClient.post(`/api/changes-involved/`, data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("Failed to create changes-involved workflow:", error.response?.data || error.message);
     return { success: false, error: error.response?.data || error.message };
   }
 }
