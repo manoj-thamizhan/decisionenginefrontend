@@ -1,4 +1,4 @@
-import React, { useMemo, useState ,useEffect} from 'react'
+import React, { useMemo, useState,useRef ,useEffect} from 'react'
 import { Routes, Route, Link, useNavigate,useSearchParams } from 'react-router-dom'
 import { Plus, Search, Filter,Send, ArrowUpDown, ArrowRight, Info,ArrowLeft, LogOutIcon,HeartPulse, Pill , ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from 'framer-motion'
@@ -268,13 +268,15 @@ function DemoCard({ title, body }) {
   )
 }
 
+
 function RegionCountrySelector() {
+  const wrapperRef = useRef(null);
   const [showRegions, setShowRegions] = useState(false);
   const [showCountries, setShowCountries] = useState(false);
   const [regionSearch, setRegionSearch] = useState("");
   const [countrySearch, setCountrySearch] = useState("");
-  const [selectedRegions, setSelectedRegions] = useState([]);
-  const [selectedCountries, setSelectedCountries] = useState([]);
+  const [selectedRegion, setSelectedRegion] = useState(null); // single
+  const [selectedCountry, setSelectedCountry] = useState(null); // single
 
   const regions = [
     "Asia Pacific (APAC)",
@@ -284,34 +286,83 @@ function RegionCountrySelector() {
     "North America (NA)",
   ];
 
-  const countries = [
-    { code: "MC", name: "Monaco" },
-    { code: "FR", name: "France" },
-    { code: "US", name: "United States" },
-    { code: "IN", name: "India" },
-    { code: "JP", name: "Japan" },
-  ];
+  const regionCountryMap = {
+    "Asia Pacific (APAC)": [
+      { code: "IN", name: "India" },
+      { code: "JP", name: "Japan" },
+      { code: "AU", name: "Australia" },
+    ],
+    "Europe (EU)": [
+      { code: "FR", name: "France" },
+      { code: "MC", name: "Monaco" },
+      { code: "DE", name: "Germany" },
+    ],
+    "Latin America (LATAM)": [
+      { code: "BR", name: "Brazil" },
+      { code: "AR", name: "Argentina" },
+    ],
+    "Middle East & Africa (MEA)": [
+      { code: "SA", name: "Saudi Arabia" },
+      { code: "ZA", name: "South Africa" },
+    ],
+    "North America (NA)": [
+      { code: "US", name: "United States" },
+      { code: "CA", name: "Canada" },
+    ],
+  };
 
-  const toggleSelection = (item, selected, setSelected) => {
-    if (selected.includes(item)) {
-      setSelected(selected.filter((i) => i !== item));
+  const countries = selectedRegion ? regionCountryMap[selectedRegion] || [] : [];
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setShowRegions(false);
+        setShowCountries(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const onSelectRegion = (region) => {
+    if (region === selectedRegion) {
+      // unselecting allowed? per requirement, we keep exactly one region OR allow none.
+      // We'll keep behavior: clicking same region unselects it and clears country.
+      setSelectedRegion(null);
+      setSelectedCountry(null);
+      setShowRegions(false);
+      setShowCountries(false);
     } else {
-      setSelected([...selected, item]);
+      setSelectedRegion(region);
+      setSelectedCountry(null); // clear previous country
+      setShowRegions(false);
+      setShowCountries(true); // open country dropdown for chosen region
+      setCountrySearch("");
     }
   };
 
+  const onSelectCountry = (countryName) => {
+    if (countryName === selectedCountry) {
+      setSelectedCountry(null);
+    } else {
+      setSelectedCountry(countryName);
+    }
+    setShowCountries(false);
+  };
+
   return (
-    <div className="bg-[#FAFAFA] p-6 rounded-[12px] shadow-sm border border-gray-100 w-full max-w-5xl mx-auto relative">
+    <div ref={wrapperRef} className="bg-[#FAFAFA] p-6 rounded-[12px] shadow-sm border border-gray-100 w-full max-w-5xl mx-auto relative">
       <h2 className="text-lg font-medium mb-6">
         Select Region/Country where products are distributed or intended to be distributed
       </h2>
 
-      <div className="flex flex-col md:flex-row gap-4 items-center relative">
-        {/* Region Search */}
-        <div className="relative flex-1">
+      <div className="flex flex-col md:flex-row gap-4 items-start relative">
+        {/* Region */}
+        <div className="relative flex-1 min-w-[200px]">
           <div
             onClick={() => {
-              setShowRegions(!showRegions);
+              setShowRegions((s) => !s);
               setShowCountries(false);
             }}
             className="flex items-center border border-gray-200 rounded-md px-4 py-2 bg-white cursor-pointer"
@@ -319,104 +370,126 @@ function RegionCountrySelector() {
             <Search size={18} className="text-gray-400 mr-2" />
             <input
               type="text"
-              value={regionSearch}
-              onChange={(e) => setRegionSearch(e.target.value)}
+              value={selectedRegion ?? regionSearch}
+              onChange={(e) => {
+                setRegionSearch(e.target.value);
+                setShowRegions(true);
+              }}
               onClick={(e) => {
                 e.stopPropagation();
                 setShowRegions(true);
               }}
-              placeholder="Search Region"
-              className="flex-1 outline-none text-gray-700 placeholder-gray-400"
+              placeholder="Select Region"
+              className="flex-1 outline-none text-gray-700 placeholder-gray-400 bg-transparent"
+              readOnly={false}
             />
           </div>
 
           {showRegions && (
-            <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-h-72 overflow-auto">
+            <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg p-2 max-h-72 overflow-auto">
               {regions
-                .filter((r) =>
-                  r.toLowerCase().includes(regionSearch.toLowerCase())
-                )
+                .filter((r) => r.toLowerCase().includes(regionSearch.toLowerCase()))
                 .map((region) => (
                   <label
                     key={region}
-                    className="flex items-center gap-2 py-1 cursor-pointer"
+                    className="flex items-center gap-2 py-2 px-2 rounded-md hover:bg-gray-50 cursor-pointer"
                   >
                     <input
-                      type="checkbox"
-                      checked={selectedRegions.includes(region)}
-                      onChange={() =>
-                        toggleSelection(region, selectedRegions, setSelectedRegions)
-                      }
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded"
+                      type="radio"
+                      name="region"
+                      checked={selectedRegion === region}
+                      onChange={() => onSelectRegion(region)}
+                      className="w-4 h-4 text-blue-600 border-gray-300"
                     />
-                    <span className="text-gray-800 text-sm">{region}</span>
+                    <div className="flex flex-col">
+                      <span className="text-gray-800 text-sm">{region}</span>
+                      <span className="text-xs text-gray-500">
+                        {regionCountryMap[region]?.length || 0} countries
+                      </span>
+                    </div>
                   </label>
                 ))}
+              {regions.filter((r) => r.toLowerCase().includes(regionSearch.toLowerCase())).length === 0 && (
+                <div className="text-sm text-gray-500 py-2 px-2">No regions found</div>
+              )}
             </div>
           )}
         </div>
 
-        {/* Country Search */}
-        <div className="relative flex-1">
+        {/* Country */}
+        <div className="relative flex-1 min-w-[200px]">
           <div
             onClick={() => {
-              setShowCountries(!showCountries);
+              // if no region, prompt region list
+              if (!selectedRegion) {
+                setShowRegions(true);
+                setShowCountries(false);
+                return;
+              }
+              setShowCountries((s) => !s);
               setShowRegions(false);
             }}
-            className="flex items-center border border-gray-200 rounded-md px-4 py-2 bg-white cursor-pointer"
+            className={`flex items-center border border-gray-200 rounded-md px-4 py-2 bg-white cursor-pointer ${!selectedRegion ? "opacity-60" : ""}`}
           >
             <Search size={18} className="text-gray-400 mr-2" />
             <input
               type="text"
-              value={countrySearch}
-              onChange={(e) => setCountrySearch(e.target.value)}
-              onClick={(e) => {
-                e.stopPropagation();
+              value={selectedCountry ?? countrySearch}
+              onChange={(e) => {
+                setCountrySearch(e.target.value);
                 setShowCountries(true);
               }}
-              placeholder="Search Country"
-              className="flex-1 outline-none text-gray-700 placeholder-gray-400"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!selectedRegion) {
+                  setShowRegions(true);
+                  setShowCountries(false);
+                } else {
+                  setShowCountries(true);
+                }
+              }}
+              placeholder={selectedRegion ? "Select Country" : "Select a region first"}
+              className="flex-1 outline-none text-gray-700 placeholder-gray-400 bg-transparent"
+              disabled={!selectedRegion}
+              readOnly={false}
             />
           </div>
 
-          {showCountries && (
-            <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-h-72 overflow-auto">
+          {showCountries && selectedRegion && (
+            <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg p-2 max-h-72 overflow-auto">
               {countries
-                .filter((c) =>
-                  c.name.toLowerCase().includes(countrySearch.toLowerCase())
-                )
+                .filter((c) => c.name.toLowerCase().includes(countrySearch.toLowerCase()))
                 .map((c) => (
                   <label
                     key={c.code}
-                    className="flex flex-col gap-1 py-2 px-2 rounded-md hover:bg-gray-50 cursor-pointer"
-                    onClick={() => toggleSelection(c.name, selectedCountries, setSelectedCountries)}
+                    className="flex items-center gap-2 py-2 px-2 rounded-md hover:bg-gray-50 cursor-pointer"
                   >
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={selectedCountries.includes(c.name)}
-                        onChange={() =>
-                          toggleSelection(c.name, selectedCountries, setSelectedCountries)
-                        }
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded"
-                      />
-                      <span className="text-gray-800 text-sm">
-                        {c.code} : {c.name}
-                      </span>
+                    <input
+                      type="radio"
+                      name="country"
+                      checked={selectedCountry === c.name}
+                      onChange={() => onSelectCountry(c.name)}
+                      className="w-4 h-4 text-blue-600 border-gray-300"
+                    />
+                    <div className="flex flex-col">
+                      <span className="text-gray-800 text-sm">{c.code} : {c.name}</span>
+                      <span className="text-xs text-gray-500">Authority (HA) Database(s)</span>
                     </div>
-                    <span className="text-xs text-gray-500 ml-6">
-                      Authority (HA) Database(s)
-                    </span>
                   </label>
                 ))}
+
+              {countries.filter((c) => c.name.toLowerCase().includes(countrySearch.toLowerCase())).length === 0 && (
+                <div className="text-sm text-gray-500 py-2 px-2">No countries found for {selectedRegion}</div>
+              )}
             </div>
           )}
         </div>
       </div>
+
+      
     </div>
   );
 }
-
 function ProductCategorySelector() {
   const [showBusinessUnits, setShowBusinessUnits] = useState(false);
   const [showCategoryLevels, setShowCategoryLevels] = useState(false);
