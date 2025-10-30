@@ -1630,7 +1630,7 @@ const goPrev = () => {
       {/* Header */}
       <div className="p-4 border-b border-b-[2px] border-[#EFEFEF]">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold">Main Editor</h3>
+          <h3 className="font-semibold">Step {stepParam || 1}</h3>
           <div className="flex gap-2">
               <button onClick={goPrev} className="flex items-center justify-center h-[36px] w-[36px] border-[#EFEFEF] border-[2px] rounded-[10px]"><ArrowLeft size={24} className="text-gray-500" /></button>
               <button onClick={goNext} className="flex items-center justify-center h-[36px] w-[36px] border-[#EFEFEF] border-[2px] rounded-[10px]"><ArrowRight size={24} className="text-gray-500" /></button>
