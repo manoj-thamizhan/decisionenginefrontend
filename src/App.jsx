@@ -173,16 +173,16 @@ function Dashboard() {
   }, [search])
 
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#EB1700] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading workflows...</p>
-        </div>
-      </div>
-    )
-  }
+  // if (loading) {
+  //   return (
+  //     <div className="flex items-center justify-center min-h-[400px]">
+  //       <div className="text-center">
+  //         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#EB1700] mx-auto mb-4"></div>
+  //         <p className="text-gray-600">Loading workflows...</p>
+  //       </div>
+  //     </div>
+  //   )
+  // }
 
   return (
     <div className="space-y-[32px]">
