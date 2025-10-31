@@ -600,8 +600,8 @@ const [showModal, setShowModal] = useState(false);
     setSelectedWorkflow(row);
     setShowModal(true);
   }} className="border border-[#EFEFEF] rounded-[8px] px-3 py-1 text-sm">View</button>
-                    <button onClick={()=> patchWorkflow({status: 'Rejected'} , row.id).then(d => console.log(d)  )} className="border border-[#EFEFEF] rounded-[8px] px-3 py-1 text-sm">Reject</button>
-                    <button onClick={()=> patchWorkflow({status: 'Approved'} , row.id).then(d => console.log(d)  )} className="border border-[#EFEFEF] rounded-[8px] px-3 py-1 text-sm">Approve</button>
+                    <button onClick={()=> patchWorkflow({status: 'Rejected'} , row.id).then(d => console.log(d)  )} className="bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700">Reject</button>
+                    <button onClick={()=> patchWorkflow({status: 'Approved'} , row.id).then(d => console.log(d)  )} className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">Approve</button>
                   </td>
                 </tr>
               ))
