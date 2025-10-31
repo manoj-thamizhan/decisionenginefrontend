@@ -16,6 +16,17 @@ export async function getWorkflows({ search = "" }) {
   }
 }
 
+export async function getWorkflow({ id }) {
+  try {
+    const response = await apiClient.get(`/api/workflows/${id}/`);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("Failed to fetch workflow:", error.response?.data || error.message);
+    return { success: false, error: error.response?.data || error.message };
+  }
+}
+
+
 // Create a new workflow
 export async function createWorkflow(data) {
   try {

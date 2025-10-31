@@ -1,12 +1,14 @@
-import React, { useMemo, useState,useRef ,useEffect} from 'react'
-import { Routes, Route, Link, useNavigate,useSearchParams } from 'react-router-dom'
-import { Plus, Search, Filter,Send, ArrowUpDown, ArrowRight, Info,ArrowLeft, LogOutIcon,HeartPulse, Pill , ChevronDown } from "lucide-react"
+import React, { useMemo, useState, useRef, useEffect } from 'react'
+import { Routes, Route, Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Plus, Search, Filter, Send, ArrowUpDown, ArrowRight, Info, ArrowLeft, LogOutIcon, HeartPulse, Pill, ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from 'framer-motion'
 import OneIcon from "./assets/1.svg";
 import TwoIcon from "./assets/2.svg";
 import ThreeIcon from "./assets/3.svg";
 import FourIcon from "./assets/4.svg";
-import { createWorkflow, patchWorkflow, getWorkflows,createChangeinvolved } from './apiservice';
+import { createWorkflow, patchWorkflow, getWorkflows, createChangeinvolved, getWorkflow } from './apiservice';
+import { g } from 'framer-motion/client';
+import { X } from "lucide-react";
 // NOTE: This single-file component is meant to be dropped into a Tailwind + React project.
 // Install dependencies: react-router-dom, @tanstack/react-table
 function InfoTooltip({ text }) {
@@ -37,22 +39,22 @@ function TopHeader({ onLogout }) {
     <header className="w-full bg-white shadow-[0px_2px_20px_2px_#0000000A] px-4 py-3 mb-[26px] ">
       <div className='max-w-7xl mx-auto  flex items-center justify-between'>
 
-      <div className="flex items-center gap-4">
-        <h1 className="text-xl font-semibold">Decision Engine</h1>
-      </div>
-
-      <div className="flex items-center gap-3">
-        
-        <div className="flex items-center gap-2  border border-[#E5E7EB]  rounded-[12px] h-[48px] px-[8px]">
-          <img
-            src="https://api.dicebear.com/6.x/initials/svg?seed=JD" 
-            alt="profile"
-            className="w-[32px] h-[32px] shadow-[0px_6.55px_11.64px_0px_#00000033] rounded-full"
-          />
-            <span className="text-sm">John Doe</span>
-        <LogOutIcon className='text-[#6A6A6A] ml-[5px]' size={24}/>
+        <div className="flex items-center gap-4">
+          <h1 className="text-xl font-semibold">Decision Engine</h1>
         </div>
-      </div>
+
+        <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-2  border border-[#E5E7EB]  rounded-[12px] h-[48px] px-[8px]">
+            <img
+              src="https://api.dicebear.com/6.x/initials/svg?seed=JD"
+              alt="profile"
+              className="w-[32px] h-[32px] shadow-[0px_6.55px_11.64px_0px_#00000033] rounded-full"
+            />
+            <span className="text-sm">John Doe</span>
+            <LogOutIcon className='text-[#6A6A6A] ml-[5px]' size={24} />
+          </div>
+        </div>
       </div>
     </header>
   )
@@ -125,7 +127,7 @@ function Dashboard() {
   const [globalFilter, setGlobalFilter] = useState('')
   const [page, setPage] = useState(1)
   const pageSize = 10
-  const [params,setParams] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const search = params.get("search") || '';
   useEffect(() => {
     const fetchWorkflows = async () => {
@@ -141,10 +143,10 @@ function Dashboard() {
             udi_fia_number: item.udr_fia_number || 'N/A',
             title: item.title || 'Untitled',
             region: item.region || 'Not specified',
-            udi_database: 'Not specified', 
+            udi_database: 'Not specified',
             gtin_change: item.gtin_change || 'No',
-              status: item.status || 'Pending Review', 
-              assessor: 'Not assigned', 
+            status: item.status || 'Pending Review',
+            assessor: 'Not assigned',
             date: item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
             product_type: item.product_type,
             product_category_unit: item.product_category_unit,
@@ -195,67 +197,67 @@ function Dashboard() {
 
       {/* Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-       
-<StatCard title="Total Workflows" number={data.length}>
-  <img src={OneIcon} alt="Total Workflows" className="w-6 h-6" />
-</StatCard>
 
-<StatCard title="Pending Review" number={data.filter(d => d.status === 'Pending Review').length}>
-  <img src={TwoIcon} alt="Pending Review" className="w-6 h-6" />
-</StatCard>
+        <StatCard title="Total Workflows" number={data.length}>
+          <img src={OneIcon} alt="Total Workflows" className="w-6 h-6" />
+        </StatCard>
 
-<StatCard title="Rejected" number={data.filter(d => d.status === 'Rejected').length}>
-  <img src={ThreeIcon} alt="Rejected" className="w-6 h-6" />
-</StatCard>
+        <StatCard title="Pending Review" number={data.filter(d => d.status === 'Pending Review').length}>
+          <img src={TwoIcon} alt="Pending Review" className="w-6 h-6" />
+        </StatCard>
 
-<StatCard title="Completed" number={data.filter(d => d.status === 'Completed').length}>
-  <img src={FourIcon} alt="Completed" className="w-6 h-6" />
-</StatCard>  </div>
+        <StatCard title="Rejected" number={data.filter(d => d.status === 'Rejected').length}>
+          <img src={ThreeIcon} alt="Rejected" className="w-6 h-6" />
+        </StatCard>
+
+        <StatCard title="Completed" number={data.filter(d => d.status === 'Completed').length}>
+          <img src={FourIcon} alt="Completed" className="w-6 h-6" />
+        </StatCard>  </div>
 
       {/* Controls: search, filters, sort, CTA */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-      <div className="flex items-center gap-2">
-        {/* New Workflow Button */}
-        <Link
-          to="/create"
-          className="flex items-center gap-2 bg-[#EB1700] border border-[#EFEFEF] text-white px-6 py-2 rounded-[12px]"
-        >
-          <Plus size={16} />
-          New Workflow
-        </Link>
+        <div className="flex items-center gap-2">
+          {/* New Workflow Button */}
+          <Link
+            to="/create"
+            className="flex items-center gap-2 bg-[#EB1700] border border-[#EFEFEF] text-white px-6 py-2 rounded-[12px]"
+          >
+            <Plus size={16} />
+            New Workflow
+          </Link>
 
-        {/* Search Input */}
-        <div className="flex items-center border border-[#EFEFEF] bg-white rounded-[12px] px-3 py-2">
-          <Search size={16} className="text-gray-500 mr-2" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => {
-              setParams({ search: e.target.value })
-              setPage(1)
-            }}
-            placeholder="Search"
-            className="outline-none w-full"
-          />
+          {/* Search Input */}
+          <div className="flex items-center border border-[#EFEFEF] bg-white rounded-[12px] px-3 py-2">
+            <Search size={16} className="text-gray-500 mr-2" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => {
+                setParams({ search: e.target.value })
+                setPage(1)
+              }}
+              placeholder="Search"
+              className="outline-none w-full"
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          {/* Sort Button */}
+          <button className="flex items-center gap-2 border border-[#EFEFEF] bg-white rounded-[12px] px-3 py-2">
+            <ArrowUpDown size={16} className="text-gray-500" />
+            Sort
+          </button>
+
+          {/* Filter Button */}
+          <button className="flex items-center gap-2 border border-[#EFEFEF] bg-white rounded-[12px] px-3 py-2">
+            <Filter size={16} className="text-gray-500" />
+            Filter
+          </button>
         </div>
       </div>
-
-      <div className="flex gap-2">
-        {/* Sort Button */}
-        <button className="flex items-center gap-2 border border-[#EFEFEF] bg-white rounded-[12px] px-3 py-2">
-          <ArrowUpDown size={16} className="text-gray-500" />
-          Sort
-        </button>
-
-        {/* Filter Button */}
-        <button className="flex items-center gap-2 border border-[#EFEFEF] bg-white rounded-[12px] px-3 py-2">
-          <Filter size={16} className="text-gray-500" />
-          Filter
-        </button>
-      </div>
-    </div>
       {/* Table */}
-       <div className="bg-white border-[2px] border-[#EFEFEF] shadow rounded-[16px] min-h-[60vh] overflow-auto">
+      <div className="bg-white border-[2px] border-[#EFEFEF] shadow rounded-[16px] min-h-[60vh] overflow-auto">
         <div className='flex justify-between pt-[22px] px-[24px] h-[80px]'>
           <h1 className=' text-[20px] font-medium leading-[100%] mt-[2px] ' >UDI FIA Workflows</h1>
           <div>
@@ -273,7 +275,7 @@ function Dashboard() {
               <th className="text-left px-4 py-2 text-[#6B7280] text-[12px]">UDI FIA Number</th>
               <th className="text-left px-4 py-2 text-[#6B7280] text-[12px]">Title</th>
               <th className="text-left px-4 py-2 text-[#6B7280] text-[12px]">Region / Country
-              
+
 
               </th>
               <th className="text-left px-4 py-2 text-[#6B7280] text-[12px]">UDI HA Database</th>
@@ -293,23 +295,12 @@ function Dashboard() {
                   <td className="px-4 py-[20px] text-[12px] font-bold">{row.udi_fia_number || 'N/A'}</td>
                   <td className="px-4 py-[20px] text-[12px]">{row.title || 'Untitled'}</td>
                   <td className="px-4 py-[20px] text-[12px]">{row.region || 'Not specified'}
-    <InfoTooltip text={row.region || 'Not specified'} />
+                    <InfoTooltip text={row.region || 'Not specified'} />
                   </td>
                   <td className="px-4 py-[20px] text-[12px]">{row.udi_database || 'Not specified'}</td>
                   <td className="px-4 py-[20px] text-[12px]">{row.gtin_change || 'No'}</td>
                   <td className="px-4 py-[20px] text-[12px]">
-                    {row.status === 'Completed' && (
-                      <span className="bg-[#D1FAE5] text-[#065F46] text-xs px-2 py-1 rounded-md">Completed</span>
-                    )}
-                    {row.status === 'Pending Review' && (
-                      <span className="bg-[#FEF3C7] text-[#92400E] text-xs px-2 py-1 rounded-md">Pending Review</span>
-                    )}
-                    {row.status === 'Rejected' && (
-                      <span className="bg-[#FEE2E2] text-[#991B1B] text-xs px-2 py-1 rounded-md">Rejected</span>
-                    )}
-                    {!row.status || !['Completed', 'Pending Review', 'Rejected'].includes(row.status) && (
-                      <span className="bg-[#FEF3C7] text-[#92400E] text-xs px-2 py-1 rounded-md">Pending Review</span>
-                    )}
+                    {row.status}
                   </td>
                   <td className="px-4 py-[20px] text-[12px]">{row.assessor || 'Not assigned'}</td>
                   <td className="px-4 py-[20px] text-[12px]">{row.date || 'N/A'}</td>
@@ -335,10 +326,305 @@ function Dashboard() {
         </table>
       </div>
 
-     
+
     </div>
   )
 }
+
+function WorkflowModal({ isOpen, onClose, workflow }) {
+  if (!isOpen || !workflow) return null;
+
+  return (
+<div className="fixed inset-0 bg-[#F9FAFB]/70 backdrop-blur-sm flex items-center justify-center z-50">
+  <div className="bg-white rounded-[16px] shadow-lg p-6 w-[90%] max-w-4xl relative">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+        >
+          <X size={20} />
+        </button>
+
+        <h2 className="text-lg font-semibold mb-4">MRI Label Update</h2>
+
+        <div className="space-y-4">
+          {[1, 2].map((_, i) => (
+            <div key={i} className="grid grid-cols-1 sm:grid-cols-5 gap-4 border border-gray-100 p-4 rounded-xl">
+              <div className="border border-gray-200 rounded-lg p-3">
+                <p className="text-xs text-gray-500 mb-1">Change Number</p>
+                <p className="font-semibold">{workflow.change_number}</p>
+              </div>
+              <div className="border border-gray-200 rounded-lg p-3">
+                <p className="text-xs text-gray-500 mb-1">GTIN Change Outcome</p>
+                <p className="font-semibold">{workflow.gtin_change || "N/A"}</p>
+              </div>
+              <div className="border border-gray-200 rounded-lg p-3">
+                <p className="text-xs text-gray-500 mb-1">UDI HA Database Impact</p>
+                <p className="font-semibold">{workflow.udi_database}</p>
+              </div>
+              <div className="border border-gray-200 rounded-lg p-3">
+                <p className="text-xs text-gray-500 mb-1">Action</p>
+                <p className="font-semibold">Regulatory notified</p>
+              </div>
+              <div className="border border-gray-200 rounded-lg p-3">
+                <p className="text-xs text-gray-500 mb-1">Status</p>
+                <p className="font-semibold">{workflow.status}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex justify-center gap-4 mt-6">
+          <button
+          
+            onClick={()=> patchWorkflow({status: 'Rejected'} , workflow.id).then(d => console.log(d)  )} 
+            className="bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700"
+          >
+            Reject
+          </button>
+          <button
+           onClick={()=> patchWorkflow({status: 'Approved'} , workflow.id).then(d => console.log(d)  )}
+            className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700"
+          >
+            Approve
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+function ApprovedDashboard() {
+  const [data, setData] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [selectedWorkflow, setSelectedWorkflow] = useState(null);
+const [showModal, setShowModal] = useState(false);
+  const [error, setError] = useState(null)
+  const [globalFilter, setGlobalFilter] = useState('')
+  const [page, setPage] = useState(1)
+  const pageSize = 10
+  const [params, setParams] = useSearchParams();
+  const search = params.get("search") || '';
+  useEffect(() => {
+    const fetchWorkflows = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const response = await getWorkflows({ search })
+
+        if (response.success) {
+          const transformedData = response.data.map(item => ({
+            id: item.id,
+            change_number: item.change_number || 'N/A',
+            udi_fia_number: item.udr_fia_number || 'N/A',
+            title: item.title || 'Untitled',
+            region: item.region || 'Not specified',
+            udi_database: 'Not specified',
+            gtin_change: item.gtin_change || 'No',
+            status: item.status || 'Pending Review',
+            assessor: 'Not assigned',
+            date: item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            product_type: item.product_type,
+            product_category_unit: item.product_category_unit,
+            product_category_level: item.product_category_level,
+            gtin_evaluation: item.gtin_evaluation,
+            has_udi_health_impact: item.has_udi_health_impact,
+            has_impact_in_new_gtin: item.has_impact_in_new_gtin,
+            created_at: item.created_at,
+            updated_at: item.updated_at
+          }))
+          setData(transformedData)
+        } else {
+          setError(response.error || 'Failed to fetch workflows')
+          setData(makeData())
+        }
+      } catch (err) {
+        console.error('Error fetching workflows:', err)
+        setError('Failed to fetch workflows')
+        setData(makeData())
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchWorkflows()
+  }, [search])
+
+
+  // if (loading) {
+  //   return (
+  //     <div className="flex items-center justify-center min-h-[400px]">
+  //       <div className="text-center">
+  //         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#EB1700] mx-auto mb-4"></div>
+  //         <p className="text-gray-600">Loading workflows...</p>
+  //       </div>
+  //     </div>
+  //   )
+  // }
+
+  return (
+    <div className="space-y-[32px]">
+      {/* Error message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-sm text-red-500 mt-1">Showing fallback data</p>
+        </div>
+      )}
+
+      {/* Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+
+        <StatCard title="Total Workflows" number={data.length}>
+          <img src={OneIcon} alt="Total Workflows" className="w-6 h-6" />
+        </StatCard>
+
+        <StatCard title="Pending Review" number={data.filter(d => d.status === 'Pending Review').length}>
+          <img src={TwoIcon} alt="Pending Review" className="w-6 h-6" />
+        </StatCard>
+
+        <StatCard title="Rejected" number={data.filter(d => d.status === 'Rejected').length}>
+          <img src={FourIcon} alt="Rejected" className="w-6 h-6" />
+        </StatCard>
+
+        <StatCard title="Completed" number={data.filter(d => d.status === 'Completed').length}>
+          <img src={ThreeIcon} alt="Completed" className="w-6 h-6" />
+        </StatCard>  </div>
+
+      {/* Controls: search, filters, sort, CTA */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div className="flex items-center gap-2">
+          {/* New Workflow Button */}
+          <Link
+            to="/create"
+            className="flex items-center gap-2 bg-[#EB1700] border border-[#EFEFEF] text-white px-6 py-2 rounded-[12px]"
+          >
+            <Plus size={16} />
+            New Workflow
+          </Link>
+
+          {/* Search Input */}
+          <div className="flex items-center border border-[#EFEFEF] bg-white rounded-[12px] px-3 py-2">
+            <Search size={16} className="text-gray-500 mr-2" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => {
+                setParams({ search: e.target.value })
+                setPage(1)
+              }}
+              placeholder="Search"
+              className="outline-none w-full"
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          {/* Sort Button */}
+          <button className="flex items-center gap-2 border border-[#EFEFEF] bg-white rounded-[12px] px-3 py-2">
+            <ArrowUpDown size={16} className="text-gray-500" />
+            Sort
+          </button>
+
+          {/* Filter Button */}
+          <button className="flex items-center gap-2 border border-[#EFEFEF] bg-white rounded-[12px] px-3 py-2">
+            <Filter size={16} className="text-gray-500" />
+            Filter
+          </button>
+        </div>
+      </div>
+      {/* Table */}
+      <div className="bg-white border-[2px] border-[#EFEFEF] shadow rounded-[16px] min-h-[60vh] overflow-auto">
+        <div className='flex justify-between pt-[22px] px-[24px] h-[80px]'>
+          <h1 className=' text-[20px] font-medium leading-[100%] mt-[2px] ' >UDI FIA Workflows</h1>
+          <div>
+            <div className="flex gap-[32px]">
+              <button className="flex items-center justify-center h-[36px] w-[36px] border-[#EFEFEF] border-[2px] rounded-[10px]"><ArrowLeft size={24} className="text-gray-500" /></button>
+              <button className="flex items-center justify-center h-[36px] w-[36px] border-[#EFEFEF] border-[2px] rounded-[10px]"><ArrowRight size={24} className="text-gray-500" /></button>
+            </div>
+          </div>
+        </div>
+<WorkflowModal
+  isOpen={showModal}
+  onClose={() => setShowModal(false)}
+  workflow={selectedWorkflow}
+/>
+        <table className="min-w-full table-auto">
+          <thead className="bg-[#FAFAFA] border-t border-[#E5E7EB]">
+            <tr>
+              <th className="text-left px-4 py-2 text-[#6B7280] text-[12px]">Change Number</th>
+              <th className="text-left px-4 py-2 text-[#6B7280] text-[12px]">UDI FIA Number</th>
+              <th className="text-left px-4 py-2 text-[#6B7280] text-[12px]">Title</th>
+              <th className="text-left px-4 py-2 text-[#6B7280] text-[12px]">Region / Country
+
+
+              </th>
+              <th className="text-left px-4 py-2 text-[#6B7280] text-[12px]">UDI HA Database</th>
+              <th className="text-left px-4 py-2 text-[#6B7280] text-[12px]">GTIN Change</th>
+              <th className="text-left px-4 py-2 text-[#6B7280] text-[12px]">Status</th>
+              <th className="text-left px-4 py-2 text-[#6B7280] text-[12px]">FIA Assessor</th>
+              <th className="text-left px-4 py-2 text-[#6B7280] text-[12px]">Date</th>
+              <th className="text-left px-4 py-2 text-[#6B7280] text-[12px]">Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {data.length > 0 ? (
+              data.map((row) => (
+                <tr key={row.id || row.change_number} className="border-t border-[#E5E7EB] hover:bg-gray-50">
+                  <td className="px-4 py-[20px] text-[12px] font-bold">{row.change_number || 'N/A'}</td>
+                  <td className="px-4 py-[20px] text-[12px] font-bold">{row.udi_fia_number || 'N/A'}</td>
+                  <td className="px-4 py-[20px] text-[12px]">{row.title || 'Untitled'}</td>
+                  <td className="px-4 py-[20px] text-[12px]">{row.region || 'Not specified'}
+                    <InfoTooltip text={row.region || 'Not specified'} />
+                  </td>
+                  <td className="px-4 py-[20px] text-[12px]">{row.udi_database || 'Not specified'}</td>
+                  <td className="px-4 py-[20px] text-[12px]">{row.gtin_change || 'No'}</td>
+                  <td className="px-4 py-[20px] text-[12px]"> {row.status}
+                    {/* {row.status === 'Approved' && (
+                      <span className="bg-[#D1FAE5] text-[#065F46] text-xs px-2 py-1 rounded-md">Approved</span>
+                    )}
+                    {row.status === 'Pending Review' && (
+                      <span className="bg-[#FEF3C7] text-[#92400E] text-xs px-2 py-1 rounded-md">Pending Review</span>
+                    )}
+                    {row.status === 'Rejected' && (
+                      <span className="bg-[#FEE2E2] text-[#991B1B] text-xs px-2 py-1 rounded-md">Rejected</span>
+                    )}
+                    {!row.status || !['Completed', 'Pending Review', 'Rejected'].includes(row.status) && (
+                      <span className="bg-[#FEF3C7] text-[#92400E] text-xs px-2 py-1 rounded-md">Pending Review</span>
+                    )} */}
+                  </td>
+                  <td className="px-4 py-[20px] text-[12px]">{row.assessor || 'Not assigned'}</td>
+                  <td className="px-4 py-[20px] text-[12px]">{row.date || 'N/A'}</td>
+                  <td className="px-4 py-[20px] flex gap-2">
+                    <button onClick={() => {
+    setSelectedWorkflow(row);
+    setShowModal(true);
+  }} className="border border-[#EFEFEF] rounded-[8px] px-3 py-1 text-sm">View</button>
+                    <button onClick={()=> patchWorkflow({status: 'Rejected'} , row.id).then(d => console.log(d)  )} className="border border-[#EFEFEF] rounded-[8px] px-3 py-1 text-sm">Reject</button>
+                    <button onClick={()=> patchWorkflow({status: 'Approved'} , row.id).then(d => console.log(d)  )} className="border border-[#EFEFEF] rounded-[8px] px-3 py-1 text-sm">Approve</button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="10" className="px-4 py-12 text-center text-gray-500">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="text-4xl">📋</div>
+                    <div className="text-lg font-medium">No workflows found</div>
+                    <div className="text-sm">Create a new workflow to get started</div>
+                  </div>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+
+    </div>
+  )
+}
+
 
 function DemoCard({ title, body }) {
   return (
@@ -360,7 +646,7 @@ function RegionCountrySelector() {
   const [countrySearch, setCountrySearch] = useState("");
   const [selectedRegion, setSelectedRegion] = useState(null); // single
   const [selectedCountry, setSelectedCountry] = useState(null); // single
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const workflowId = searchParams.get("workflow_id");
   const regions = [
     "Asia Pacific (APAC)",
@@ -409,7 +695,16 @@ function RegionCountrySelector() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-    const patchRegion = async (region) => {
+
+  const goNext = () => {
+  // preserve all existing params and increment "step" (default to 1 if missing/invalid)
+  const params = new URLSearchParams(searchParams);
+  const current = parseInt(params.get("step") || "1", 10) || 1;
+  const next = current + 1;
+  params.set("step", String(next));
+  setSearchParams(params);
+};
+  const patchRegion = async (region) => {
     if (!workflowId) {
       alert("Please create a workflow first.");
       return;
@@ -438,6 +733,8 @@ function RegionCountrySelector() {
       };
       const res = await patchWorkflow(payload, workflowId);
       console.log("Patched country:", res);
+      goNext(); 
+
     } catch (err) {
       console.error("Error patching country:", err);
       alert("Failed to update country.");
@@ -482,31 +779,7 @@ function RegionCountrySelector() {
   };
 
 
-  // const onSelectRegion = (region) => {
-  //   if (region === selectedRegion) {
-  //     // unselecting allowed? per requirement, we keep exactly one region OR allow none.
-  //     // We'll keep behavior: clicking same region unselects it and clears country.
-  //     setSelectedRegion(null);
-  //     setSelectedCountry(null);
-  //     setShowRegions(false);
-  //     setShowCountries(false);
-  //   } else {
-  //     setSelectedRegion(region);
-  //     setSelectedCountry(null); // clear previous country
-  //     setShowRegions(false);
-  //     setShowCountries(true); // open country dropdown for chosen region
-  //     setCountrySearch("");
-  //   }
-  // };
 
-  // const onSelectCountry = (countryName) => {
-  //   if (countryName === selectedCountry) {
-  //     setSelectedCountry(null);
-  //   } else {
-  //     setSelectedCountry(countryName);
-  //   }
-  //   setShowCountries(false);
-  // };
 
   return (
     <div ref={wrapperRef} className="bg-[#FAFAFA] p-6 rounded-[12px] shadow-sm border border-gray-100 w-full max-w-5xl mx-auto relative">
@@ -643,13 +916,13 @@ function RegionCountrySelector() {
         </div>
       </div>
 
-      
+
     </div>
   );
 }
 function ProductCategorySelector() {
-  const [searchParams] = useSearchParams();
-const workflowId = searchParams.get("workflow_id");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const workflowId = searchParams.get("workflow_id");
   const [showBusinessUnits, setShowBusinessUnits] = useState(false);
   const [showCategoryLevels, setShowCategoryLevels] = useState(false);
   const [selectedBusinessUnit, setSelectedBusinessUnit] = useState("");
@@ -684,33 +957,43 @@ const workflowId = searchParams.get("workflow_id");
     }
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  if (!workflowId) {
-    alert("Please create a workflow first before saving this step.");
-    return;
-  }
-
-  try {
-    const payload = {
-      business_unit: selectedBusinessUnit,
-      product_category_level: selectedCategoryLevel,
-    };
-
-    const response = await patchWorkflow(payload, workflowId);
-
-    if (response && (response.success || response.id)) {
-      alert("Workflow updated successfully!");
-      console.log("Workflow patched:", response);
-    } else {
-      alert("Failed to update workflow");
-    }
-  } catch (err) {
-    console.error("Error updating workflow:", err);
-    alert("Something went wrong while updating workflow.");
-  }
+  const goNext = () => {
+  // preserve all existing params and increment "step" (default to 1 if missing/invalid)
+  const params = new URLSearchParams(searchParams);
+  const current = parseInt(params.get("step") || "1", 10) || 1;
+  const next = current + 1;
+  params.set("step", String(next));
+  setSearchParams(params);
 };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!workflowId) {
+      alert("Please create a workflow first before saving this step.");
+      return;
+    }
+
+    try {
+      const payload = {
+        business_unit: selectedBusinessUnit,
+        product_category_level: selectedCategoryLevel,
+      };
+
+      const response = await patchWorkflow(payload, workflowId);
+
+      if (response && (response.success || response.id)) {
+        alert("Workflow updated successfully!");
+        console.log("Workflow patched:", response);
+        goNext();
+      } else {
+        alert("Failed to update workflow");
+      }
+    } catch (err) {
+      console.error("Error updating workflow:", err);
+      alert("Something went wrong while updating workflow.");
+    }
+  };
   return (
     <div className="bg-[#FAFAFA] p-6 rounded-[12px] shadow-sm border border-gray-100 w-full max-w-4xl mx-auto relative">
       <h2 className="text-lg font-medium mb-6">Select product category</h2>
@@ -740,9 +1023,8 @@ const handleSubmit = async (e) => {
                 <label
                   key={item}
                   onClick={() => handleSelect(item, "business")}
-                  className={`flex items-center gap-2 py-2 px-2 rounded-md cursor-pointer hover:bg-gray-50 ${
-                    selectedBusinessUnit === item ? "bg-gray-100" : ""
-                  }`}
+                  className={`flex items-center gap-2 py-2 px-2 rounded-md cursor-pointer hover:bg-gray-50 ${selectedBusinessUnit === item ? "bg-gray-100" : ""
+                    }`}
                 >
                   <input
                     type="radio"
@@ -779,9 +1061,8 @@ const handleSubmit = async (e) => {
                 <label
                   key={item}
                   onClick={() => handleSelect(item, "category")}
-                  className={`flex items-center gap-2 py-2 px-2 rounded-md cursor-pointer hover:bg-gray-50 ${
-                    selectedCategoryLevel === item ? "bg-gray-100" : ""
-                  }`}
+                  className={`flex items-center gap-2 py-2 px-2 rounded-md cursor-pointer hover:bg-gray-50 ${selectedCategoryLevel === item ? "bg-gray-100" : ""
+                    }`}
                 >
                   <input
                     type="radio"
@@ -815,7 +1096,14 @@ function UdiAssessmentForm() {
     change_number: "",
     udr_fia_number: "",
   });
-
+const goNext = () => {
+  // preserve all existing params and increment "step" (default to 1 if missing/invalid)
+  const params = new URLSearchParams(searchParams);
+  const current = parseInt(params.get("step") || "1", 10) || 1;
+  const next = current + 1;
+  params.set("step", String(next));
+  setSearchParams(params);
+};
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -831,7 +1119,7 @@ function UdiAssessmentForm() {
 
       if (workflowId) {
         // PATCH (update) expects backend keys exactly as serializer/model
-        response = await patchWorkflow (formData, workflowId);
+        response = await patchWorkflow(formData, workflowId);
         console.log("Workflow updated:", response);
       } else {
         // Create new workflow
@@ -844,7 +1132,8 @@ function UdiAssessmentForm() {
       }
 
       if (response && response.success) {
-        alert(`Workflow ${workflowId ? "updated" : "created"} successfully!`);
+      goNext();
+
       } else {
         alert(`Failed to ${workflowId ? "update" : "create"} workflow`);
       }
@@ -891,9 +1180,18 @@ function UdiAssessmentForm() {
 }
 function ProductTypeSelector() {
   const [selected, setSelected] = useState(null);
-  const [searchParams] = useSearchParams();
+  const [searchParams,setSearchParams] = useSearchParams();
   const workflowId = searchParams.get("workflow_id");
- const handleSelect = async (type) => {
+
+  const goNext = () => {
+  // preserve all existing params and increment "step" (default to 1 if missing/invalid)
+  const params = new URLSearchParams(searchParams);
+  const current = parseInt(params.get("step") || "1", 10) || 1;
+  const next = current + 1;
+  params.set("step", String(next));
+  setSearchParams(params);
+};
+  const handleSelect = async (type) => {
     setSelected(type);
 
     // ✅ If workflow_id exists, patch immediately
@@ -908,6 +1206,7 @@ function ProductTypeSelector() {
 
       if (response && (response.success || response.id)) {
         console.log("Product type updated:", response);
+        goNext();
       } else {
         alert("Failed to update product type");
       }
@@ -929,17 +1228,15 @@ function ProductTypeSelector() {
         <div
           onClick={() => handleSelect("medtech")}
           className={`flex flex-col items-center justify-center flex-1 border rounded-[12px] py-8 cursor-pointer transition 
-            ${
-              selected === "medtech"
-                ? "bg-gray-100 border-gray-300"
-                : "bg-white border-gray-200 hover:border-gray-300"
+            ${selected === "medtech"
+              ? "bg-gray-100 border-gray-300"
+              : "bg-white border-gray-200 hover:border-gray-300"
             }`}
         >
           <HeartPulse
             size={40}
-            className={`${
-              selected === "medtech" ? "text-purple-600" : "text-purple-500"
-            } mb-2`}
+            className={`${selected === "medtech" ? "text-purple-600" : "text-purple-500"
+              } mb-2`}
           />
           <span className="font-medium text-gray-800">MedTech</span>
         </div>
@@ -948,17 +1245,15 @@ function ProductTypeSelector() {
         <div
           onClick={() => handleSelect("medicine")}
           className={`flex flex-col items-center justify-center flex-1 border rounded-[12px] py-8 cursor-pointer transition 
-            ${
-              selected === "medicine"
-                ? "bg-gray-100 border-gray-300"
-                : "bg-white border-gray-200 hover:border-gray-300"
+            ${selected === "medicine"
+              ? "bg-gray-100 border-gray-300"
+              : "bg-white border-gray-200 hover:border-gray-300"
             }`}
         >
           <Pill
             size={40}
-            className={`${
-              selected === "medicine" ? "text-red-600" : "text-red-500"
-            } mb-2`}
+            className={`${selected === "medicine" ? "text-red-600" : "text-red-500"
+              } mb-2`}
           />
           <span className="font-medium text-gray-800">Innovative Medicine</span>
         </div>
@@ -1004,6 +1299,14 @@ function ChangeCategoriesSelector() {
   // react-router hook to read & set search params
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const goNext = () => {
+    // preserve all existing params and increment "step" (default to 1 if missing/invalid)
+    const params = new URLSearchParams(searchParams);
+    const current = parseInt(params.get("step") || "1", 10) || 1;
+    const next = current + 1;
+    params.set("step", String(next));
+  setSearchParams(params);
+};
   // Initialize selected from URL on mount
   useEffect(() => {
     const cats = searchParams.get("categories");
@@ -1024,10 +1327,12 @@ function ChangeCategoriesSelector() {
 
     if (selected.length > 0) {
       paramsObj.categories = selected.join(",");
+
     } else {
       // remove the param if nothing selected
       delete paramsObj.categories;
     }
+    
 
     setSearchParams(paramsObj, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1064,11 +1369,10 @@ function ChangeCategoriesSelector() {
               }}
               onMouseEnter={() => setHovered(cat.id)}
               onMouseLeave={() => setHovered(null)}
-              className={`relative flex flex-col items-center justify-center text-center p-4 border rounded-xl cursor-pointer transition-all duration-200 bg-white shadow-sm ${
-                isSelected
+              className={`relative flex flex-col items-center justify-center text-center p-4 border rounded-xl cursor-pointer transition-all duration-200 bg-white shadow-sm ${isSelected
                   ? "border-[#EB1700] shadow-md"
                   : "border-gray-200 hover:border-gray-300"
-              }`}
+                }`}
             >
               <div className="text-3xl mb-2">{cat.icon}</div>
               <p className="text-sm font-medium text-gray-800 leading-tight">
@@ -1116,6 +1420,7 @@ function ChangeCategoriesSelector() {
         <button
           onClick={() => {
             console.log("Selected categories:", selected);
+            goNext();
           }}
           className="bg-[#EB1700] hover:bg-[#d01400] text-white font-medium px-10 py-2.5 rounded-[12px] shadow-md transition-all"
         >
@@ -1153,14 +1458,14 @@ function SelectedCategoriesForm() {
     }
     try {
       const categoryTitle = categories.find((c) => c.id === categoryId)?.title;
-      const payload = { 
+      const payload = {
         workflow: workflowId,
         change_category: categoryTitle,
         change_description: detail
       };
       const response = await createChangeinvolved(payload);
       console.log("Created changes-involved record:", response);
-      
+
       if (response.success) {
         alert(`Successfully saved detail for ${categoryTitle}`);
       } else {
@@ -1171,6 +1476,15 @@ function SelectedCategoriesForm() {
       alert("Failed to create changes-involved record.");
     }
   };
+
+  const goNext = () => {
+  // preserve all existing params and increment "step" (default to 1 if missing/invalid)
+  const params = new URLSearchParams(searchParams);
+  const current = parseInt(params.get("step") || "1", 10) || 1;
+  const next = current + 1;
+  params.set("step", String(next));
+  setSearchParams(params);
+};
 
   const handleSave = async (id) => {
     const detail = details[id] || "";
@@ -1189,15 +1503,16 @@ function SelectedCategoriesForm() {
       alert("Please create a workflow first.");
       return;
     }
-    
+
     try {
-      const payload = { 
+      const payload = {
         all_category_details: details,
         category_details_completed: true
       };
       const response = await patchWorkflow(payload, workflowId);
       console.log("Submitted all category details:", response);
       alert("All category details submitted successfully!");
+      goNext(); 
     } catch (err) {
       console.error("Error submitting category details:", err);
       alert("Failed to submit category details.");
@@ -1275,82 +1590,92 @@ function SelectedCategoriesForm() {
   );
 }
 function GTINChangeEvaluation({ initial = 'yes', onChange }) {
-const [selected, setSelected] = useState(initial);
-const [searchParams] = useSearchParams();
-const workflowId = searchParams.get('workflow_id');
+  const [selected, setSelected] = useState(initial);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const workflowId = searchParams.get('workflow_id');
 
-const patchGTINChange = async (value) => {
-  if (!workflowId) {
-    alert("Please create a workflow first.");
-    return;
-  }
-  try {
-    const payload = { gtin_evaluation: value };
-    const response = await patchWorkflow(payload, workflowId);
-    console.log("Patched GTIN change evaluation:", response);
-  } catch (err) {
-    console.error("Error patching GTIN change evaluation:", err);
-    alert("Failed to update GTIN change evaluation.");
-  }
+
+   const goNext = () => {
+  // preserve all existing params and increment "step" (default to 1 if missing/invalid)
+  const params = new URLSearchParams(searchParams);
+  const current = parseInt(params.get("step") || "1", 10) || 1;
+  const next = current + 1;
+  params.set("step", String(next));
+  setSearchParams(params);
 };
+  const patchGTINChange = async (value) => {
+    if (!workflowId) {
+      alert("Please create a workflow first.");
+      return;
+    }
+    try {
+      const payload = { gtin_evaluation: value };
+      const response = await patchWorkflow(payload, workflowId);
+      console.log("Patched GTIN change evaluation:", response);
+      goNext(); 
+    } catch (err) {
+      console.error("Error patching GTIN change evaluation:", err);
+      alert("Failed to update GTIN change evaluation.");
+    }
+  };
 
-function handleSelect(value) {
-setSelected(value);
-patchGTINChange(value);
-if (typeof onChange === 'function') onChange(value);
-}
-
-
-const optionBase = 'flex-1 rounded-lg border px-6 py-3 cursor-pointer transition-shadow duration-150';
-const selectedClasses = 'border-green-400 shadow-sm ring-2 ring-green-200 bg-white';
-const unselectedClasses = 'border-gray-200 bg-white hover:shadow-sm';
-
-
-return (
-<div className="max-w-3xl mx-auto p-6">
-<div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
-<h3 className="text-sm font-medium text-gray-700 mb-4">GTIN Change Evaluation</h3>
-
-
-<div className="flex gap-4">
-<button
-type="button"
-aria-pressed={selected === 'yes'}
-onClick={() => handleSelect('yes')}
-className={`${optionBase} ${selected === 'yes' ? selectedClasses : unselectedClasses} text-green-700 font-medium text-center`}
->
-Yes
-</button>
+  function handleSelect(value) {
+    setSelected(value);
+    patchGTINChange(value);
+    if (typeof onChange === 'function') onChange(value);
+  }
 
 
-<button
-type="button"
-aria-pressed={selected === 'no'}
-onClick={() => handleSelect('no')}
-className={`${optionBase} ${selected === 'no' ? 'border-gray-400 shadow-sm' : unselectedClasses} text-gray-700 font-medium text-center`}
->
-No
-</button>
+  const optionBase = 'flex-1 rounded-lg border px-6 py-3 cursor-pointer transition-shadow duration-150';
+  const selectedClasses = 'border-green-400 shadow-sm ring-2 ring-green-200 bg-white';
+  const unselectedClasses = 'border-gray-200 bg-white hover:shadow-sm';
 
 
-<button
-type="button"
-aria-pressed={selected === 'retention'}
-onClick={() => handleSelect('retention')}
-className={`${optionBase} ${selected === 'retention' ? 'border-gray-400 shadow-sm' : unselectedClasses} text-gray-700 font-medium text-center`}
->
-GTIN Retention
-</button>
-</div>
+  return (
+    <div className="max-w-3xl mx-auto p-6">
+      <div className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
+        <h3 className="text-sm font-medium text-gray-700 mb-4">GTIN Change Evaluation</h3>
 
 
-<p className="mt-3 text-xs text-gray-500">
-GTIN Retention - Option for approval to keep same GTIN, complete form{' '}
-<span className="text-red-600 italic font-medium">501394274</span>
-</p>
-</div>
-</div>
-);
+        <div className="flex gap-4">
+          <button
+            type="button"
+            aria-pressed={selected === 'yes'}
+            onClick={() => handleSelect('yes')}
+            className={`${optionBase} ${selected === 'yes' ? selectedClasses : unselectedClasses} text-green-700 font-medium text-center`}
+          >
+            Yes
+          </button>
+
+
+          <button
+            type="button"
+            aria-pressed={selected === 'no'}
+            onClick={() => handleSelect('no')}
+            className={`${optionBase} ${selected === 'no' ? 'border-gray-400 shadow-sm' : unselectedClasses} text-gray-700 font-medium text-center`}
+          >
+            No
+          </button>
+
+
+          <button
+            type="button"
+            aria-pressed={selected === 'retention'}
+            onClick={() => handleSelect('retention')}
+            className={`${optionBase} ${selected === 'retention' ? 'border-gray-400 shadow-sm' : unselectedClasses} text-gray-700 font-medium text-center`}
+          >
+            GTIN Retention
+          </button>
+        </div>
+
+
+        <p className="mt-3 text-xs text-gray-500">
+          GTIN Retention - Option for approval to keep same GTIN, complete form{' '}
+          <span className="text-red-600 italic font-medium">501394274</span>
+        </p>
+      </div>
+    </div>
+  );
 }
 
 function UdiRecordImpactSelector() {
@@ -1359,7 +1684,15 @@ function UdiRecordImpactSelector() {
   const workflowId = searchParams.get('workflow_id');
 
   const options = ["Yes", "No", "Pending Review"]
-
+  
+ const goNext = () => {
+  // preserve all existing params and increment "step" (default to 1 if missing/invalid)
+  const params = new URLSearchParams(searchParams);
+  const current = parseInt(params.get("step") || "1", 10) || 1;
+  const next = current + 1;
+  params.set("step", String(next));
+  setSearchParams(params);
+};
   const patchUdiRecordImpact = async (value) => {
     if (!workflowId) {
       alert("Please create a workflow first.");
@@ -1369,6 +1702,7 @@ function UdiRecordImpactSelector() {
       const payload = { has_udi_health_impact: value };
       const response = await patchWorkflow(payload, workflowId);
       console.log("Patched UDI record impact:", response);
+      goNext();
     } catch (err) {
       console.error("Error patching UDI record impact:", err);
       alert("Failed to update UDI record impact.");
@@ -1391,10 +1725,9 @@ function UdiRecordImpactSelector() {
             key={opt}
             onClick={() => handleSelect(opt)}
             className={`flex-1 px-4 py-2 rounded-lg border text-sm font-medium transition-all
-              ${
-                selected === opt
-                  ? "border-green-500 text-green-700 bg-green-50"
-                  : "border-gray-300 text-gray-600 hover:border-gray-400"
+              ${selected === opt
+                ? "border-green-500 text-green-700 bg-green-50"
+                : "border-gray-300 text-gray-600 hover:border-gray-400"
               }`}
           >
             {opt}
@@ -1407,9 +1740,18 @@ function UdiRecordImpactSelector() {
 
 function GtinImpactQuestion() {
   const [selected, setSelected] = useState(null);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const workflowId = searchParams.get('workflow_id');
 
+
+  const goNext = () => {
+  // preserve all existing params and increment "step" (default to 1 if missing/invalid)
+  const params = new URLSearchParams(searchParams);
+  const current = parseInt(params.get("step") || "1", 10) || 1;
+  const next = current + 1;
+  params.set("step", String(next));
+  setSearchParams(params);
+};
   const patchGtinImpact = async (value) => {
     if (!workflowId) {
       alert("Please create a workflow first.");
@@ -1419,6 +1761,7 @@ function GtinImpactQuestion() {
       const payload = { gtin_change: value };
       const response = await patchWorkflow(payload, workflowId);
       console.log("Patched GTIN impact question:", response);
+      goNext();
     } catch (err) {
       console.error("Error patching GTIN impact question:", err);
       alert("Failed to update GTIN impact question.");
@@ -1454,11 +1797,10 @@ function GtinImpactQuestion() {
           <div key={opt.value} className="flex-1 text-center">
             <button
               onClick={() => handleSelect(opt.value)}
-              className={`w-full py-3 rounded-xl border text-base font-medium transition-all duration-200 ${
-                selected === opt.value
+              className={`w-full py-3 rounded-xl border text-base font-medium transition-all duration-200 ${selected === opt.value
                   ? "border-green-600 text-green-700 bg-green-50"
                   : "border-gray-200 hover:border-gray-400"
-              }`}
+                }`}
             >
               {opt.value}
             </button>
@@ -1543,37 +1885,37 @@ function InfoBox({ label, value }) {
 }
 
 function EditorCanvas({ items: initialItems }) {
-    const [searchParams,setSearchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const udi_record_impact = searchParams.get("udi_record_impact")
   const baseItems = initialItems || [
-    { id: 1, component: <UdiAssessmentForm/> },
-    { id: 2, component: <ProductTypeSelector/> },
-    { id: 3, component: <ProductCategorySelector/> },
-    { id: 4, component: <RegionCountrySelector/>},
-    { id: 5, component: <ChangeCategoriesSelector/>},
-    { id: 6, component: <SelectedCategoriesForm/>},
-    { id: 7, component: <GTINChangeEvaluation/>},
-    { id: 8, component: <UdiRecordImpactSelector/>},
-    { id: 9, component: <GtinImpactQuestion/>},
-    { id: 10, component: <NotifyWorkflowSummary/>},
-    { id: 11, component: <NotifyWorkflowSummaryLast/>},
-    
-    
+    { id: 1, component: <UdiAssessmentForm /> },
+    { id: 2, component: <ProductTypeSelector /> },
+    { id: 3, component: <ProductCategorySelector /> },
+    { id: 4, component: <RegionCountrySelector /> },
+    { id: 5, component: <ChangeCategoriesSelector /> },
+    { id: 6, component: <SelectedCategoriesForm /> },
+    { id: 7, component: <GTINChangeEvaluation /> },
+    { id: 8, component: <UdiRecordImpactSelector /> },
+    { id: 9, component: <GtinImpactQuestion /> },
+    { id: 10, component: <NotifyWorkflowSummary /> },
+    { id: 11, component: <NotifyWorkflowSummaryLast /> },
 
-    
-    
-    
-    
+
+
+
+
+
+
   ]
 
-    if (udi_record_impact === "Yes") {
-    baseItems.splice(8, 0, { id: 999, component: <GtinImpactQuestion/> })
+  if (udi_record_impact === "Yes") {
+    baseItems.splice(8, 0, { id: 999, component: <GtinImpactQuestion /> })
   }
 
   const items = baseItems;
 
-const stepParam = parseInt(searchParams.get("step") || "1", 10)
-const active = Math.min(Math.max(stepParam - 1, 0), (items?.length || 0) - 1)
+  const stepParam = parseInt(searchParams.get("step") || "1", 10)
+  const active = Math.min(Math.max(stepParam - 1, 0), (items?.length || 0) - 1)
 
 
   // optional keyboard navigation
@@ -1586,19 +1928,19 @@ const active = Math.min(Math.max(stepParam - 1, 0), (items?.length || 0) - 1)
     return () => window.removeEventListener("keydown", onKey)
   }, [items.length])
 
-const goNext = () => {
-  const next = Math.min(active + 1, items.length - 1)
-  const params = Object.fromEntries(searchParams)
-  params.step = String(next + 1) // keep URL step 1-based
-  setSearchParams(params)
-}
+  const goNext = () => {
+    const next = Math.min(active + 1, items.length - 1)
+    const params = Object.fromEntries(searchParams)
+    params.step = String(next + 1) // keep URL step 1-based
+    setSearchParams(params)
+  }
 
-const goPrev = () => {
-  const prev = Math.max(active - 1, 0)
-  const params = Object.fromEntries(searchParams)
-  params.step = String(prev + 1)
-  setSearchParams(params)
-}
+  const goPrev = () => {
+    const prev = Math.max(active - 1, 0)
+    const params = Object.fromEntries(searchParams)
+    params.step = String(prev + 1)
+    setSearchParams(params)
+  }
 
   // animation variants
   const variants = {
@@ -1632,9 +1974,9 @@ const goPrev = () => {
         <div className="flex items-center justify-between">
           <h3 className="font-semibold">Step {stepParam || 1}</h3>
           <div className="flex gap-2">
-              <button onClick={goPrev} className="flex items-center justify-center h-[36px] w-[36px] border-[#EFEFEF] border-[2px] rounded-[10px]"><ArrowLeft size={24} className="text-gray-500" /></button>
-              <button onClick={goNext} className="flex items-center justify-center h-[36px] w-[36px] border-[#EFEFEF] border-[2px] rounded-[10px]"><ArrowRight size={24} className="text-gray-500" /></button>
-            
+            <button onClick={goPrev} className="flex items-center justify-center h-[36px] w-[36px] border-[#EFEFEF] border-[2px] rounded-[10px]"><ArrowLeft size={24} className="text-gray-500" /></button>
+            <button onClick={goNext} className="flex items-center justify-center h-[36px] w-[36px] border-[#EFEFEF] border-[2px] rounded-[10px]"><ArrowRight size={24} className="text-gray-500" /></button>
+
           </div>
         </div>
       </div>
@@ -1680,7 +2022,121 @@ const goPrev = () => {
   )
 }
 
+const QUESTIONS = [
+  { id: 1, question: "What UDI assessment are you working on?", key: "change_number" },
+  { id: 2, question: "What type of product are you assessing?", key: "product_type" },
+  { id: 3, question: "Select product category", key: "product_category_level" },
+  { id: 4, question: "Select Region/Country where products are distributed or intended to be distributed", key: "region" },
+  { id: 5, question: "What change categories are involved in this change?", key: "change_category" },
+  { id: 7, question: "GTIN Change Evaluation", key: "gtin_evaluation" },
+  { id: 8, question: "UDI Health Authority Record Impact", key: "has_udi_health_impact" },
+  { id: 9, question: "Did this change impact result in a new GTIN?", key: "gtin_change" },
+  
 
+  // add or reorder objects here to map each card to the API key
+];
+
+
+function AssessmentCards() {
+  const [searchParams] = useSearchParams();
+  const stepParam = searchParams.get("step") || "1"; // default to 1 if not present
+  const step = parseInt(stepParam, 10) || 1;
+
+
+  // answers is a flat object returned by the API: { product_type: "...", region: "...", ... }
+  const [answers, setAnswers] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+
+  useEffect(() => {
+    // This effect runs whenever the "step" url param changes exactly.
+    // Even though the backend returns all answers (no step param required), we re-fetch
+    // the entire answers object on step changes as requested.
+    let isCancelled = false;
+
+
+    async function fetchAnswers() {
+      setLoading(true);
+      setError(null);
+
+
+      try {
+        // Replace this with your real endpoint. No step query param is needed but
+        // we keep it out of the request to match your backend description.
+        const wfid = searchParams.get("workflow_id");
+        if (!wfid) return;;
+        const res = await getWorkflow({ id: wfid });
+        if (!res.success) throw new Error(`HTTP ${res.status}`);
+        const data = res.data;
+        console.log("Fetched answers data:", data);
+
+
+        // Accept either { answers: { ... } } or flat { ... }
+        const payload = data && data.answers ? data.answers : data || {};
+
+
+        if (!isCancelled) setAnswers(payload);
+      } catch (err) {
+        if (!isCancelled) setError(err.message || "Failed to fetch");
+      } finally {
+        if (!isCancelled) setLoading(false);
+      }
+    }
+
+
+    fetchAnswers();
+
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [stepParam]);
+
+
+  const cardsToRender = QUESTIONS.map((q) => ({
+    id: q.id,
+    question: q.question,
+    answer: answers[q.key] || "",
+  }));
+
+
+  return (
+    <div className="max-w-md mx-auto p-4">
+      {error && (
+        <div className="mb-3 text-red-600 text-sm">Error loading answers: {error}</div>
+      )}
+
+
+      {cardsToRender.map((card, idx) => (
+        <div key={card.id} className="flex flex-col items-center">
+          <div className="w-full bg-white rounded-xl shadow p-4 mb-2 relative">
+            <div className="flex gap-4 items-start">
+              <div className="text-red-500 font-semibold">{String(card.id).padStart(2, "0")}</div>
+              <div className="flex-1">
+                <div className="text-sm text-gray-600">{card.question}</div>
+                <div className="mt-2 text-red-600 font-medium">{card.answer || (loading ? "Loading..." : "—")}</div>
+              </div>
+            </div>
+          </div>
+
+
+          {/* arrow except after last card */}
+          {idx !== cardsToRender.length - 1 && (
+            <div className="h-8 flex items-center" aria-hidden>
+              <svg className="w-6 h-6 text-gray-400" viewBox="0 0 24 24" fill="none">
+                <path d="M12 4v12" strokeWidth="2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M7 11l5 5 5-5" strokeWidth="2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+          )}
+        </div>
+      ))}
+
+
+    </div>
+  );
+}
 
 
 
@@ -1696,17 +2152,17 @@ function CreateRecord() {
           {/* Fixed header */}
           <div className="p-4 border-b border-gray-200">
             <h3 className="font-semibold mb-1">Decision Workflow</h3>
-            
+
           </div>
 
           {/* Scrollable content */}
           <div className="flex-1 overflow-auto p-4 space-y-2">
-            
+            <AssessmentCards />
           </div>
         </div>
 
         {/* Elastic box */}
-  <EditorCanvas/>
+        <EditorCanvas />
 
       </div>
     </div>
@@ -1725,6 +2181,7 @@ export default function App() {
       <main className="max-w-7xl mx-auto mt-4">
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/approver-dashboard" element={<ApprovedDashboard />} />
           <Route path="/create" element={<CreateRecord />} />
         </Routes>
       </main>
