@@ -2,6 +2,7 @@ import React, { useMemo, useState, useRef, useEffect } from 'react'
 import { Routes, Route, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Plus, Search, Filter, Send, ArrowUpDown, ArrowRight, Info, ArrowLeft, LogOutIcon, HeartPulse, Pill, ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from 'framer-motion'
+import { toast, Toaster } from 'react-hot-toast'
 import OneIcon from "./assets/1.svg";
 import TwoIcon from "./assets/2.svg";
 import ThreeIcon from "./assets/3.svg";
@@ -706,7 +707,7 @@ function RegionCountrySelector() {
 };
   const patchRegion = async (region) => {
     if (!workflowId) {
-      alert("Please create a workflow first.");
+      toast.error("Please create a workflow first.");
       return;
     }
     try {
@@ -716,13 +717,13 @@ function RegionCountrySelector() {
       // optional: show toast/notification based on res
     } catch (err) {
       console.error("Error patching region:", err);
-      alert("Failed to update region.");
+      toast.error("Failed to update region.");
     }
   };
 
   const patchCountry = async (countryObj) => {
     if (!workflowId) {
-      alert("Please create a workflow first.");
+      toast.error("Please create a workflow first.");
       return;
     }
     try {
@@ -737,7 +738,7 @@ function RegionCountrySelector() {
 
     } catch (err) {
       console.error("Error patching country:", err);
-      alert("Failed to update country.");
+      toast.error("Failed to update country.");
     }
   };
 
@@ -970,7 +971,7 @@ function ProductCategorySelector() {
     e.preventDefault();
 
     if (!workflowId) {
-      alert("Please create a workflow first before saving this step.");
+      toast.error("Please create a workflow first before saving this step.");
       return;
     }
 
@@ -983,15 +984,15 @@ function ProductCategorySelector() {
       const response = await patchWorkflow(payload, workflowId);
 
       if (response && (response.success || response.id)) {
-        alert("Workflow updated successfully!");
+        toast.success("Workflow updated successfully!");
         console.log("Workflow patched:", response);
         goNext();
       } else {
-        alert("Failed to update workflow");
+        toast.error("Failed to update workflow");
       }
     } catch (err) {
       console.error("Error updating workflow:", err);
-      alert("Something went wrong while updating workflow.");
+      toast.error("Something went wrong while updating workflow.");
     }
   };
   return (
@@ -1135,11 +1136,11 @@ const goNext = () => {
       goNext();
 
       } else {
-        alert(`Failed to ${workflowId ? "update" : "create"} workflow`);
+        toast.error(`Failed to ${workflowId ? "update" : "create"} workflow`);
       }
     } catch (err) {
       console.error("Error submitting form:", err);
-      alert("Something went wrong!");
+      toast.error("Something went wrong!");
     }
   };
 
@@ -1196,7 +1197,7 @@ function ProductTypeSelector() {
 
     // ✅ If workflow_id exists, patch immediately
     if (!workflowId) {
-      alert("Please create a UDI workflow first.");
+      toast.error("Please create a UDI workflow first.");
       return;
     }
 
@@ -1208,11 +1209,11 @@ function ProductTypeSelector() {
         console.log("Product type updated:", response);
         goNext();
       } else {
-        alert("Failed to update product type");
+        toast.error("Failed to update product type");
       }
     } catch (err) {
       console.error("Error updating product type:", err);
-      alert("Something went wrong while updating product type.");
+      toast.error("Something went wrong while updating product type.");
     }
   };
 
@@ -1453,7 +1454,7 @@ function SelectedCategoriesForm() {
 
   const saveChangeinvolved = async (categoryId, detail) => {
     if (!workflowId) {
-      alert("Please create a workflow first.");
+      toast.error("Please create a workflow first.");
       return;
     }
     try {
@@ -1467,13 +1468,13 @@ function SelectedCategoriesForm() {
       console.log("Created changes-involved record:", response);
 
       if (response.success) {
-        alert(`Successfully saved detail for ${categoryTitle}`);
+        toast.success(`Successfully saved detail for ${categoryTitle}`);
       } else {
-        alert("Failed to create changes-involved record.");
+        toast.error("Failed to create changes-involved record.");
       }
     } catch (err) {
       console.error("Error creating changes-involved record:", err);
-      alert("Failed to create changes-involved record.");
+      toast.error("Failed to create changes-involved record.");
     }
   };
 
@@ -1500,7 +1501,7 @@ function SelectedCategoriesForm() {
 
   const handleSubmit = async () => {
     if (!workflowId) {
-      alert("Please create a workflow first.");
+      toast.error("Please create a workflow first.");
       return;
     }
 
@@ -1511,11 +1512,11 @@ function SelectedCategoriesForm() {
       };
       const response = await patchWorkflow(payload, workflowId);
       console.log("Submitted all category details:", response);
-      alert("All category details submitted successfully!");
+      toast.success("All category details submitted successfully!");
       goNext(); 
     } catch (err) {
       console.error("Error submitting category details:", err);
-      alert("Failed to submit category details.");
+      toast.error("Failed to submit category details.");
     }
   };
 
@@ -1605,7 +1606,7 @@ function GTINChangeEvaluation({ initial = 'yes', onChange }) {
 };
   const patchGTINChange = async (value) => {
     if (!workflowId) {
-      alert("Please create a workflow first.");
+      toast.error("Please create a workflow first.");
       return;
     }
     try {
@@ -1615,7 +1616,7 @@ function GTINChangeEvaluation({ initial = 'yes', onChange }) {
       goNext(); 
     } catch (err) {
       console.error("Error patching GTIN change evaluation:", err);
-      alert("Failed to update GTIN change evaluation.");
+      toast.error("Failed to update GTIN change evaluation.");
     }
   };
 
@@ -1695,7 +1696,7 @@ function UdiRecordImpactSelector() {
 };
   const patchUdiRecordImpact = async (value) => {
     if (!workflowId) {
-      alert("Please create a workflow first.");
+      toast.error("Please create a workflow first.");
       return;
     }
     try {
@@ -1705,7 +1706,7 @@ function UdiRecordImpactSelector() {
       goNext();
     } catch (err) {
       console.error("Error patching UDI record impact:", err);
-      alert("Failed to update UDI record impact.");
+      toast.error("Failed to update UDI record impact.");
     }
   };
 
@@ -1754,7 +1755,7 @@ function GtinImpactQuestion() {
 };
   const patchGtinImpact = async (value) => {
     if (!workflowId) {
-      alert("Please create a workflow first.");
+      toast.error("Please create a workflow first.");
       return;
     }
     try {
@@ -1764,7 +1765,7 @@ function GtinImpactQuestion() {
       goNext();
     } catch (err) {
       console.error("Error patching GTIN impact question:", err);
-      alert("Failed to update GTIN impact question.");
+      toast.error("Failed to update GTIN impact question.");
     }
   };
 
@@ -2172,11 +2173,33 @@ export default function App() {
   const navigate = useNavigate ? null : null
   const onLogout = () => {
     // simple mock handler
-    alert('Logged out')
+    toast.success('Logged out')
   }
 
   return (
     <div className="min-h-screen bg-[#F5F7FA] ">
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#fff',
+            color: '#333',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10B981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#EF4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
       <TopHeader onLogout={onLogout} />
       <main className="max-w-7xl mx-auto mt-4">
         <Routes>
