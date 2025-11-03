@@ -122,6 +122,8 @@ const makeData = () => {
 }
 function Dashboard() {
   const [data, setData] = useState([])
+    const [selectedWorkflow, setSelectedWorkflow] = useState(null);
+const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [globalFilter, setGlobalFilter] = useState('')
@@ -194,6 +196,12 @@ function Dashboard() {
           <p className="text-sm text-red-500 mt-1">Showing fallback data</p>
         </div>
       )}
+
+      <WorkflowModalView
+  isOpen={showModal}
+  onClose={() => setShowModal(false)}
+  workflow={selectedWorkflow}
+/>
 
       {/* Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
@@ -305,8 +313,11 @@ function Dashboard() {
                   <td className="px-4 py-[20px] text-[12px]">{row.assessor || 'Not assigned'}</td>
                   <td className="px-4 py-[20px] text-[12px]">{row.date || 'N/A'}</td>
                   <td className="px-4 py-[20px] flex gap-2">
-                    <button className="border border-[#EFEFEF] rounded-[8px] px-3 py-1 text-sm">View</button>
-                    <button className="border border-[#EFEFEF] rounded-[8px] px-3 py-1 text-sm">Edit</button>
+                    <button onClick={() => {
+    setSelectedWorkflow(row);
+    setShowModal(true);
+  }} className="border border-[#EFEFEF] rounded-[8px] px-3 py-1 text-sm">View</button>
+                    {/* <button className="border border-[#EFEFEF] rounded-[8px] px-3 py-1 text-sm">Edit</button> */}
                     <button className="border border-[#EFEFEF] rounded-[8px] px-3 py-1 text-sm">Export</button>
                   </td>
                 </tr>
@@ -347,7 +358,7 @@ function WorkflowModal({ isOpen, onClose, workflow }) {
         <h2 className="text-lg font-semibold mb-4">MRI Label Update</h2>
 
         <div className="space-y-4">
-          {[1, 2].map((_, i) => (
+          {[1].map((_, i) => (
             <div key={i} className="grid grid-cols-1 sm:grid-cols-5 gap-4 border border-gray-100 p-4 rounded-xl">
               <div className="border border-gray-200 rounded-lg p-3">
                 <p className="text-xs text-gray-500 mb-1">Change Number</p>
@@ -388,6 +399,68 @@ function WorkflowModal({ isOpen, onClose, workflow }) {
             Approve
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function WorkflowModalView({ isOpen, onClose, workflow }) {
+  if (!isOpen || !workflow) return null;
+
+  return (
+<div className="fixed inset-0 bg-[#F9FAFB]/70 backdrop-blur-sm flex items-center justify-center z-50">
+  <div className="bg-white rounded-[16px] shadow-lg p-6 w-[90%] max-w-4xl relative">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+        >
+          <X size={20} />
+        </button>
+
+        <h2 className="text-lg font-semibold mb-4">MRI Label Update</h2>
+
+        <div className="space-y-4">
+          {[1].map((_, i) => (
+            <div key={i} className="grid grid-cols-1 sm:grid-cols-5 gap-4 border border-gray-100 p-4 rounded-xl">
+              <div className="border border-gray-200 rounded-lg p-3">
+                <p className="text-xs text-gray-500 mb-1">Change Number</p>
+                <p className="font-semibold">{workflow.change_number}</p>
+              </div>
+              <div className="border border-gray-200 rounded-lg p-3">
+                <p className="text-xs text-gray-500 mb-1">GTIN Change Outcome</p>
+                <p className="font-semibold">{workflow.gtin_change || "N/A"}</p>
+              </div>
+              <div className="border border-gray-200 rounded-lg p-3">
+                <p className="text-xs text-gray-500 mb-1">UDI HA Database Impact</p>
+                <p className="font-semibold">{workflow.udi_database}</p>
+              </div>
+              <div className="border border-gray-200 rounded-lg p-3">
+                <p className="text-xs text-gray-500 mb-1">Action</p>
+                <p className="font-semibold">Regulatory notified</p>
+              </div>
+              <div className="border border-gray-200 rounded-lg p-3">
+                <p className="text-xs text-gray-500 mb-1">Status</p>
+                <p className="font-semibold">{workflow.status}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* <div className="flex justify-center gap-4 mt-6">
+          <button
+          
+            onClick={()=> patchWorkflow({status: 'Rejected'} , workflow.id).then(d => console.log(d)  )} 
+            className="bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700"
+          >
+            Reject
+          </button>
+          <button
+           onClick={()=> patchWorkflow({status: 'Approved'} , workflow.id).then(d => console.log(d)  )}
+            className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700"
+          >
+            Approve
+          </button>
+        </div> */}
       </div>
     </div>
   );
