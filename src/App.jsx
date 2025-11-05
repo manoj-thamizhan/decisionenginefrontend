@@ -34,6 +34,43 @@ function InfoTooltip({ text }) {
     </div>
   )
 }
+const baseItems = [
+  { id: 1, component: <UdiAssessmentForm />, key: 'a' },
+  { id: 2, component: <ProductTypeSelector />, key: 'product_type' },
+  { id: 3, component: <ProductCategorySelector />, key: 'product_category_unit,product_category_level' },
+  { id: 4, component: <RegionCountrySelector />, key: 'region' },
+  { id: 5, component: <ChangeCategoriesSelector />, key: 'd' },
+  { id: 6, component: <SelectedCategoriesForm />, key: 'country' },
+  { id: 7, component: <GTINChangeEvaluation />, key: 'gtin_evaluation' },
+  { id: 8, component: <UdiRecordImpactSelector />, key: 'has_udi_health_impact' },
+  { id: 9, component: <GtinImpactQuestion />, key: 'gtin_change' },
+  { id: 10, component: <NotifyWorkflowSummary />, key: 'summary' },
+  { id: 11, component: <NotifyWorkflowSummaryLast />, key: 'final_summary' },
+];
+
+function getIndexFromKey(key, items = baseItems) {
+  console.log(key)
+  const index = (() => {
+    if (!key) return -1;
+
+    const paramParts = Array.isArray(key)
+      ? key.map(String)
+      : (typeof key === 'string' && key.includes(','))
+        ? key.split(',').map(k => k.trim()).filter(Boolean)
+        : [String(key)];
+
+    return items.findIndex(item => {
+      const itemKey = item.key;
+      const itemParts = Array.isArray(itemKey)
+        ? itemKey.map(String)
+        : (typeof itemKey === 'string' && itemKey.includes(','))
+          ? itemKey.split(',').map(k => k.trim()).filter(Boolean)
+          : [String(itemKey)];
+      return paramParts.some(p => itemParts.includes(p));
+    });
+  })();
+  return index !== -1 ? index+1 : null; // returns null if key not found
+}
 
 function TopHeader({ onLogout }) {
   return (
@@ -176,16 +213,7 @@ function Dashboard() {
   }, [search])
 
 
-  // if (loading) {
-  //   return (
-  //     <div className="flex items-center justify-center min-h-[400px]">
-  //       <div className="text-center">
-  //         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#EB1700] mx-auto mb-4"></div>
-  //         <p className="text-gray-600">Loading workflows...</p>
-  //       </div>
-  //     </div>
-  //   )
-  // }
+ 
 
   return (
     <div className="space-y-[32px]">
@@ -656,6 +684,11 @@ function RegionCountrySelector() {
     "Middle East & Africa (MEA)",
     "North America (NA)",
   ];
+  const goto = (next) => {
+  const params = new URLSearchParams(searchParams);
+  params.set("step", String(next));
+  setSearchParams(params);
+};
 
   const regionCountryMap = {
     "Asia Pacific (APAC)": [
@@ -712,8 +745,15 @@ function RegionCountrySelector() {
     }
     try {
       const payload = { region };
-      const res = await patchWorkflow(payload, workflowId);
-      console.log("Patched region:", res);
+      const response = await patchWorkflow(payload, workflowId);
+      if(response.data?.action_item){
+        goto(10)
+      }
+      if(response.data?.least_distinct_field_in_modelb?.field){
+
+          goto(getIndexFromKey(response.data?.least_distinct_field_in_modelb?.field));
+        }
+      console.log("Patched region:", response);
       // optional: show toast/notification based on res
     } catch (err) {
       console.error("Error patching region:", err);
@@ -731,10 +771,17 @@ function RegionCountrySelector() {
       const payload = {
         country: countryObj,
       };
-      const res = await patchWorkflow(payload, workflowId);
-      console.log("Patched country:", res);
-      goNext(); 
+      const response = await patchWorkflow(payload, workflowId);
+      if(response.data?.action_item){
+        goto(10)
+      }
+      if(response.data?.least_distinct_field_in_modelb?.field){
 
+          goto(getIndexFromKey(response.data?.least_distinct_field_in_modelb?.field));
+        }else{
+          goNext()
+          
+        }
     } catch (err) {
       console.error("Error patching country:", err);
       toast.error("Failed to update country.");
@@ -958,6 +1005,11 @@ function ProductCategorySelector() {
   params.set("step", String(next));
   setSearchParams(params);
 };
+const goto = (next) => {
+  const params = new URLSearchParams(searchParams);
+  params.set("step", String(next));
+  setSearchParams(params);
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -976,9 +1028,18 @@ function ProductCategorySelector() {
       const response = await patchWorkflow(payload, workflowId);
 
       if (response && (response.success || response.id)) {
-        toast.success("Workflow updated successfully!");
-        console.log("Workflow patched:", response);
-        goNext();
+        
+      if(response.data?.least_distinct_field_in_modelb?.field){
+
+          goto(getIndexFromKey(response.data?.least_distinct_field_in_modelb?.field));
+        }
+        
+        if(response.data?.action_item){
+        goto(10)
+      }else{
+          goNext()
+          
+        }
       } else {
         toast.error("Failed to update workflow");
       }
@@ -1097,6 +1158,12 @@ const goNext = () => {
   params.set("step", String(next));
   setSearchParams(params);
 };
+
+const goto = (next) => {
+  const params = new URLSearchParams(searchParams);
+  params.set("step", String(next));
+  setSearchParams(params);
+};
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -1106,6 +1173,8 @@ const goNext = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // goto(getIndexFromKey("e"));
 
     try {
       let response;
@@ -1184,6 +1253,11 @@ function ProductTypeSelector() {
   params.set("step", String(next));
   setSearchParams(params);
 };
+const goto = (next) => {
+  const params = new URLSearchParams(searchParams);
+  params.set("step", String(next));
+  setSearchParams(params);
+};
   const handleSelect = async (type) => {
     setSelected(type);
 
@@ -1199,7 +1273,16 @@ function ProductTypeSelector() {
 
       if (response && (response.success || response.id)) {
         console.log("Product type updated:", response);
-        goNext();
+        if(response.data?.action_item){
+          goto(10)
+        }
+        if(response.data?.least_distinct_field_in_modelb?.field){
+
+          goto(getIndexFromKey(response.data?.least_distinct_field_in_modelb?.field));
+        }else{
+          goNext()
+          
+        }
       } else {
         toast.error("Failed to update product type");
       }
@@ -1298,6 +1381,11 @@ function ChangeCategoriesSelector() {
     const current = parseInt(params.get("step") || "1", 10) || 1;
     const next = current + 1;
     params.set("step", String(next));
+  setSearchParams(params);
+};
+const goto = (next) => {
+  const params = new URLSearchParams(searchParams);
+  params.set("step", String(next));
   setSearchParams(params);
 };
   // Initialize selected from URL on mount
@@ -1478,6 +1566,11 @@ function SelectedCategoriesForm() {
   params.set("step", String(next));
   setSearchParams(params);
 };
+const goto = (next) => {
+  const params = new URLSearchParams(searchParams);
+  params.set("step", String(next));
+  setSearchParams(params);
+};
 
   const handleSave = async (id) => {
     const detail = details[id] || "";
@@ -1596,6 +1689,11 @@ function GTINChangeEvaluation({ initial = 'yes', onChange }) {
   params.set("step", String(next));
   setSearchParams(params);
 };
+const goto = (next) => {
+  const params = new URLSearchParams(searchParams);
+  params.set("step", String(next));
+  setSearchParams(params);
+};
   const patchGTINChange = async (value) => {
     if (!workflowId) {
       toast.error("Please create a workflow first.");
@@ -1605,7 +1703,16 @@ function GTINChangeEvaluation({ initial = 'yes', onChange }) {
       const payload = { gtin_evaluation: value };
       const response = await patchWorkflow(payload, workflowId);
       console.log("Patched GTIN change evaluation:", response);
-      goNext(); 
+      if(response.data?.action_item){
+        goto(10)
+      }
+      if(response.data?.least_distinct_field_in_modelb?.field){
+
+          goto(getIndexFromKey(response.data?.least_distinct_field_in_modelb?.field));
+        }else{
+          goNext()
+          
+        }
     } catch (err) {
       console.error("Error patching GTIN change evaluation:", err);
       toast.error("Failed to update GTIN change evaluation.");
@@ -1686,6 +1793,11 @@ function UdiRecordImpactSelector() {
   params.set("step", String(next));
   setSearchParams(params);
 };
+const goto = (next) => {
+  const params = new URLSearchParams(searchParams);
+  params.set("step", String(next));
+  setSearchParams(params);
+};
   const patchUdiRecordImpact = async (value) => {
     if (!workflowId) {
       toast.error("Please create a workflow first.");
@@ -1695,7 +1807,16 @@ function UdiRecordImpactSelector() {
       const payload = { has_udi_health_impact: value };
       const response = await patchWorkflow(payload, workflowId);
       console.log("Patched UDI record impact:", response);
-      goNext();
+      if(response.data?.action_item){
+        goto(10)
+      }
+      if(response.data?.least_distinct_field_in_modelb?.field){
+
+          goto(getIndexFromKey(response.data?.least_distinct_field_in_modelb?.field));
+        }else{
+          goNext()
+          
+        }
     } catch (err) {
       console.error("Error patching UDI record impact:", err);
       toast.error("Failed to update UDI record impact.");
@@ -1745,6 +1866,12 @@ function GtinImpactQuestion() {
   params.set("step", String(next));
   setSearchParams(params);
 };
+
+const goto = (next) => {
+  const params = new URLSearchParams(searchParams);
+  params.set("step", String(next));
+  setSearchParams(params);
+};
   const patchGtinImpact = async (value) => {
     if (!workflowId) {
       toast.error("Please create a workflow first.");
@@ -1753,8 +1880,16 @@ function GtinImpactQuestion() {
     try {
       const payload = { gtin_change: value };
       const response = await patchWorkflow(payload, workflowId);
-      console.log("Patched GTIN impact question:", response);
-      goNext();
+      if(response.data?.action_item){
+        goto(10)
+      }
+      if(response.data?.least_distinct_field_in_modelb?.field){
+
+          goto(getIndexFromKey(response.data?.least_distinct_field_in_modelb?.field));
+        }else{
+          goNext()
+          
+        }
     } catch (err) {
       console.error("Error patching GTIN impact question:", err);
       toast.error("Failed to update GTIN impact question.");
@@ -1877,26 +2012,15 @@ function InfoBox({ label, value }) {
   );
 }
 
+
+
 function EditorCanvas({ items: initialItems }) {
   const [searchParams, setSearchParams] = useSearchParams()
-  const udi_record_impact = searchParams.get("udi_record_impact")
-  const baseItems = initialItems || [
-    { id: 1, component: <UdiAssessmentForm /> },
-    { id: 2, component: <ProductTypeSelector /> },
-    { id: 3, component: <ProductCategorySelector /> },
-    { id: 4, component: <RegionCountrySelector /> },
-    { id: 5, component: <ChangeCategoriesSelector /> },
-    { id: 6, component: <SelectedCategoriesForm /> },
-    { id: 7, component: <GTINChangeEvaluation /> },
-    { id: 8, component: <UdiRecordImpactSelector /> },
-    { id: 9, component: <GtinImpactQuestion /> },
-    { id: 10, component: <NotifyWorkflowSummary /> },
-    { id: 11, component: <NotifyWorkflowSummaryLast /> },
-  ]
+  // const udi_record_impact = searchParams.get("udi_record_impact")
 
-  if (udi_record_impact === "Yes") {
-    baseItems.splice(8, 0, { id: 999, component: <GtinImpactQuestion /> })
-  }
+  // if (udi_record_impact === "Yes") {
+  //   baseItems.splice(8, 0, { id: 999, component: <GtinImpactQuestion /> })
+  // }
 
   const items = baseItems;
 
@@ -2055,7 +2179,7 @@ function AssessmentCards() {
         const res = await getWorkflow({ id: wfid });
         if (!res.success) throw new Error(`HTTP ${res.status}`);
         const data = res.data;
-        console.log("Fetched answers data:", data);
+        
 
 
         // Accept either { answers: { ... } } or flat { ... }
