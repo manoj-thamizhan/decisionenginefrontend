@@ -729,8 +729,7 @@ function RegionCountrySelector() {
     try {
       // Send both name and code to be safe — adjust to your backend schema if needed
       const payload = {
-        country: countryObj.name,
-        country_code: countryObj.code,
+        country: countryObj,
       };
       const res = await patchWorkflow(payload, workflowId);
       console.log("Patched country:", res);
@@ -749,8 +748,6 @@ function RegionCountrySelector() {
       setSelectedCountry(null);
       setShowRegions(false);
       setShowCountries(false);
-      // Optionally clear on backend: send region = null (uncomment if desired)
-      // patchRegion(null);
     } else {
       setSelectedRegion(region);
       setSelectedCountry(null);
@@ -764,17 +761,12 @@ function RegionCountrySelector() {
   };
 
   const onSelectCountry = (countryObj) => {
-    const isSame =
-      selectedCountry && selectedCountry.code === countryObj.code;
-    if (isSame) {
-      setSelectedCountry(null);
-    } else {
-      setSelectedCountry(countryObj);
-    }
+  
+    setSelectedCountry(countryObj);
+    
     setShowCountries(false);
 
-    // optimistic backend update
-    if (!isSame) patchCountry(countryObj);
+    patchCountry(countryObj);
     // if unselecting and you want to remove country from backend, you could call:
     // else patchCountry({ name: null, code: null });
   };
@@ -977,7 +969,7 @@ function ProductCategorySelector() {
 
     try {
       const payload = {
-        business_unit: selectedBusinessUnit,
+        product_category_unit: selectedBusinessUnit,
         product_category_level: selectedCategoryLevel,
       };
 
@@ -1900,13 +1892,6 @@ function EditorCanvas({ items: initialItems }) {
     { id: 9, component: <GtinImpactQuestion /> },
     { id: 10, component: <NotifyWorkflowSummary /> },
     { id: 11, component: <NotifyWorkflowSummaryLast /> },
-
-
-
-
-
-
-
   ]
 
   if (udi_record_impact === "Yes") {
