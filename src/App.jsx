@@ -69,6 +69,7 @@ function getIndexFromKey(key, items = baseItems) {
       return paramParts.some(p => itemParts.includes(p));
     });
   })();
+  console.log('Derived index:', index);
   return index !== -1 ? index+1 : null; // returns null if key not found
 }
 
@@ -747,7 +748,10 @@ function RegionCountrySelector() {
       const payload = { region };
       const response = await patchWorkflow(payload, workflowId);
       if(response.data?.action_item){
-        goto(10)
+        const params = new URLSearchParams(searchParams);
+        params.set("step","10")
+        params.set("action", String(response.data.action_item));
+        setSearchParams(params);
       }
       if(response.data?.least_distinct_field_in_modelb?.field){
 
@@ -778,9 +782,12 @@ function RegionCountrySelector() {
           goto(getIndexFromKey(response.data?.least_distinct_field_in_modelb?.field));
         }
         if(response.data?.action_item){
-        goto(10)
+          const params = new URLSearchParams(searchParams);
+          params.set("step","10")
+        params.set("action", String(response.data.action_item));
+        setSearchParams(params);
       }else{
-          goNext()
+          if(response.data?.least_distinct_field_in_modelb?.field){}else{goNext()}
           
         }
     } catch (err) {
@@ -1036,9 +1043,13 @@ const goto = (next) => {
         }
         
         if(response.data?.action_item){
-        goto(10)
+          const params = new URLSearchParams(searchParams);
+          
+        params.set("action", String(response.data.action_item));
+        params.set("step", String(10));
+        setSearchParams(params);
       }else{
-          goNext()
+          if(response.data?.least_distinct_field_in_modelb?.field){}else{goNext()}
           
         }
       } else {
@@ -1274,12 +1285,15 @@ const goto = (next) => {
 
       if (response && (response.success || response.id)) {
         console.log("Product type updated:", response);
-        if(response.data?.action_item){
-          goto(10)
-        }
+        
         if(response.data?.least_distinct_field_in_modelb?.field){
 
           goto(getIndexFromKey(response.data?.least_distinct_field_in_modelb?.field));
+        }else if(response.data?.action_item){
+          const params = new URLSearchParams(searchParams);
+          params.set("step","10")
+        params.set("action", String(response.data.action_item));
+        setSearchParams(params);
         }else{
           goNext()
           
@@ -1710,9 +1724,12 @@ const goto = (next) => {
           goto(getIndexFromKey(response.data?.least_distinct_field_in_modelb?.field));
         }
         if(response.data?.action_item){
-        goto(10)
+          const params = new URLSearchParams(searchParams);
+          params.set("step","10")
+        params.set("action", String(response.data.action_item));
+        setSearchParams(params);
       }else{
-          goNext()
+          if(response.data?.least_distinct_field_in_modelb?.field){}else{goNext()}
           
         }
     } catch (err) {
@@ -1815,9 +1832,12 @@ const goto = (next) => {
           goto(getIndexFromKey(response.data?.least_distinct_field_in_modelb?.field));
         }
         if(response.data?.action_item){
-        goto(10)
+          const params = new URLSearchParams(searchParams);
+          params.set("step","10")
+        params.set("action", String(response.data.action_item));
+        setSearchParams(params);
       }else{
-          goNext()
+          if(response.data?.least_distinct_field_in_modelb?.field){}else{goNext()}
           
         }
     } catch (err) {
@@ -1889,9 +1909,12 @@ const goto = (next) => {
           goto(getIndexFromKey(response.data?.least_distinct_field_in_modelb?.field));
         }
         if(response.data?.action_item){
-        goto(10)
+          const params = new URLSearchParams(searchParams);
+          params.set("step","10")
+        params.set("action", String(response.data.action_item));
+        setSearchParams(params);
       }else{
-          goNext()
+          if(response.data?.least_distinct_field_in_modelb?.field){}else{goNext()}
           
         }
     } catch (err) {
