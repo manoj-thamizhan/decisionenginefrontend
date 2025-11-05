@@ -772,13 +772,14 @@ function RegionCountrySelector() {
         country: countryObj,
       };
       const response = await patchWorkflow(payload, workflowId);
-      if(response.data?.action_item){
-        goto(10)
-      }
+      
       if(response.data?.least_distinct_field_in_modelb?.field){
 
           goto(getIndexFromKey(response.data?.least_distinct_field_in_modelb?.field));
-        }else{
+        }
+        if(response.data?.action_item){
+        goto(10)
+      }else{
           goNext()
           
         }
@@ -1703,13 +1704,14 @@ const goto = (next) => {
       const payload = { gtin_evaluation: value };
       const response = await patchWorkflow(payload, workflowId);
       console.log("Patched GTIN change evaluation:", response);
-      if(response.data?.action_item){
-        goto(10)
-      }
+      
       if(response.data?.least_distinct_field_in_modelb?.field){
 
           goto(getIndexFromKey(response.data?.least_distinct_field_in_modelb?.field));
-        }else{
+        }
+        if(response.data?.action_item){
+        goto(10)
+      }else{
           goNext()
           
         }
@@ -1807,13 +1809,14 @@ const goto = (next) => {
       const payload = { has_udi_health_impact: value };
       const response = await patchWorkflow(payload, workflowId);
       console.log("Patched UDI record impact:", response);
-      if(response.data?.action_item){
-        goto(10)
-      }
+      
       if(response.data?.least_distinct_field_in_modelb?.field){
 
           goto(getIndexFromKey(response.data?.least_distinct_field_in_modelb?.field));
-        }else{
+        }
+        if(response.data?.action_item){
+        goto(10)
+      }else{
           goNext()
           
         }
@@ -1880,13 +1883,14 @@ const goto = (next) => {
     try {
       const payload = { gtin_change: value };
       const response = await patchWorkflow(payload, workflowId);
-      if(response.data?.action_item){
-        goto(10)
-      }
+      
       if(response.data?.least_distinct_field_in_modelb?.field){
 
           goto(getIndexFromKey(response.data?.least_distinct_field_in_modelb?.field));
-        }else{
+        }
+        if(response.data?.action_item){
+        goto(10)
+      }else{
           goNext()
           
         }
