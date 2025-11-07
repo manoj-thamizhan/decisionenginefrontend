@@ -58,3 +58,13 @@ export async function patchWorkflow(data, id) {
     return { success: false, error: error.response?.data || error.message };
   }
 }
+
+export async function getOptionsforWorkflow(id) {
+  try {
+    const response = await apiClient.get(`options/${id}`);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("Failed to update workflow:", error.response?.data || error.message);
+    return { success: false, error: error.response?.data || error.message };
+  }
+}
