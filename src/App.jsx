@@ -442,7 +442,7 @@ const optionsList = options?.[question_key] || [];
         } else if (response.data?.action_item) {
           const params = new URLSearchParams(searchParams);
           params.set("action", String(response.data.action_item));
-          params.set("step", String(100));
+          params.set("step", String(21));
           setSearchParams(params);
         } else {
           if (!response.data?.least_distinct_field_in_modelb?.field) {
